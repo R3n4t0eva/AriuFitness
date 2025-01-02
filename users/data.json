@@ -1,0 +1,85 @@
+{
+    "admin": {
+      "04-11-2024-10-00-00": {
+        "arms_up": {"reps": 10, "accuracy": 0.6, "avg_time": 4.2},
+        "arms_extension": {"reps": 10, "accuracy": 0.58, "avg_time": 4.3},
+        "chair_raises": {"reps": 10, "accuracy": 0.55, "avg_time": 4.5},
+        "leg_extension": {"reps": 10, "accuracy": 0.57, "avg_time": 4.4},
+        "lateral_raises": {"reps": 10, "accuracy": 0.59, "avg_time": 4.6},
+        "arms_lateral": {"reps": 10, "accuracy": 0.56, "avg_time": 4.5}
+      },
+      "05-11-2024-10-00-00": {
+        "arms_up": {"reps": 11, "accuracy": 0.62, "avg_time": 4.2},
+        "arms_extension": {"reps": 11, "accuracy": 0.6, "avg_time": 4.2},
+        "chair_raises": {"reps": 10, "accuracy": 0.57, "avg_time": 4.6},
+        "leg_extension": {"reps": 10, "accuracy": 0.55, "avg_time": 4.5},
+        "lateral_raises": {"reps": 11, "accuracy": 0.6, "avg_time": 4.5},
+        "arms_lateral": {"reps": 10, "accuracy": 0.57, "avg_time": 4.4}
+      },
+      "06-11-2024-10-00-00": {
+        "arms_up": {"reps": 12, "accuracy": 0.61, "avg_time": 4.1},
+        "arms_extension": {"reps": 11, "accuracy": 0.59, "avg_time": 4.1},
+        "chair_raises": {"reps": 12, "accuracy": 0.58, "avg_time": 4.3},
+        "leg_extension": {"reps": 12, "accuracy": 0.6, "avg_time": 4.4},
+        "lateral_raises": {"reps": 12, "accuracy": 0.63, "avg_time": 4.2},
+        "arms_lateral": {"reps": 12, "accuracy": 0.59, "avg_time": 4.3}
+      },
+      "07-11-2024-10-00-00": {
+        "arms_up": {"reps": 13, "accuracy": 0.63, "avg_time": 4.0},
+        "arms_extension": {"reps": 13, "accuracy": 0.62, "avg_time": 4.1},
+        "chair_raises": {"reps": 11, "accuracy": 0.59, "avg_time": 4.4},
+        "leg_extension": {"reps": 12, "accuracy": 0.58, "avg_time": 4.3},
+        "lateral_raises": {"reps": 13, "accuracy": 0.62, "avg_time": 4.1},
+        "arms_lateral": {"reps": 12, "accuracy": 0.6, "avg_time": 4.2}
+      },
+      "08-11-2024-10-00-00": {
+        "arms_up": {"reps": 14, "accuracy": 0.62, "avg_time": 3.9},
+        "arms_extension": {"reps": 12, "accuracy": 0.61, "avg_time": 4.0},
+        "chair_raises": {"reps": 14, "accuracy": 0.61, "avg_time": 4.3},
+        "leg_extension": {"reps": 13, "accuracy": 0.6, "avg_time": 4.1},
+        "lateral_raises": {"reps": 14, "accuracy": 0.65, "avg_time": 4.0},
+        "arms_lateral": {"reps": 14, "accuracy": 0.62, "avg_time": 4.0}
+      },
+      "11-11-2024-10-00-00": {
+        "arms_up": {"reps": 15, "accuracy": 0.64, "avg_time": 3.7},
+        "arms_extension": {"reps": 14, "accuracy": 0.63, "avg_time": 3.8},
+        "chair_raises": {"reps": 13, "accuracy": 0.62, "avg_time": 4.3},
+        "leg_extension": {"reps": 15, "accuracy": 0.61, "avg_time": 4.0},
+        "lateral_raises": {"reps": 14, "accuracy": 0.66, "avg_time": 3.9},
+        "arms_lateral": {"reps": 13, "accuracy": 0.61, "avg_time": 3.9}
+      },
+      "12-11-2024-10-00-00": {
+        "arms_up": {"reps": 14, "accuracy": 0.65, "avg_time": 3.8},
+        "arms_extension": {"reps": 15, "accuracy": 0.64, "avg_time": 3.9},
+        "chair_raises": {"reps": 15, "accuracy": 0.63, "avg_time": 4.2},
+        "leg_extension": {"reps": 14, "accuracy": 0.62, "avg_time": 3.8},
+        "lateral_raises": {"reps": 15, "accuracy": 0.67, "avg_time": 3.8},
+        "arms_lateral": {"reps": 14, "accuracy": 0.63, "avg_time": 3.8}
+      },
+      "13-11-2024-10-00-00": {
+        "arms_up": {"reps": 16, "accuracy": 0.66, "avg_time": 3.6},
+        "arms_extension": {"reps": 14, "accuracy": 0.62, "avg_time": 3.8},
+        "chair_raises": {"reps": 15, "accuracy": 0.65, "avg_time": 4.3},
+        "leg_extension": {"reps": 16, "accuracy": 0.64, "avg_time": 3.7},
+        "lateral_raises": {"reps": 16, "accuracy": 0.68, "avg_time": 3.5},
+        "arms_lateral": {"reps": 15, "accuracy": 0.65, "avg_time": 3.7}
+      },
+      "14-11-2024-10-00-00": {
+        "arms_up": {"reps": 17, "accuracy": 0.67, "avg_time": 3.5},
+        "arms_extension": {"reps": 15, "accuracy": 0.65, "avg_time": 3.7},
+        "chair_raises": {"reps": 16, "accuracy": 0.63, "avg_time": 4.3},
+        "leg_extension": {"reps": 17, "accuracy": 0.66, "avg_time": 3.6},
+        "lateral_raises": {"reps": 17, "accuracy": 0.69, "avg_time": 3.4},
+        "arms_lateral": {"reps": 17, "accuracy": 0.68, "avg_time": 3.5}
+      },
+      "15-11-2024-10-00-00": {
+        "arms_up": {"reps": 18, "accuracy": 0.66, "avg_time": 3.4},
+        "arms_extension": {"reps": 16, "accuracy": 0.66, "avg_time": 3.5},
+        "chair_raises": {"reps": 17, "accuracy": 0.64, "avg_time": 4.1},
+        "leg_extension": {"reps": 16, "accuracy": 0.65, "avg_time": 3.5},
+        "lateral_raises": {"reps": 16, "accuracy": 0.7, "avg_time": 3.3},
+        "arms_lateral": {"reps": 16, "accuracy": 0.67, "avg_time": 3.4}
+      }
+    }
+  }
+  
