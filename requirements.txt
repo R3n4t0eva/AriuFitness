@@ -1,0 +1,16 @@
+graphviz
+matplotlib
+DateTime
+opencv-python
+imblearn
+mediapipe
+torch
+torchinfo
+torchvision
+optuna
+python-dotenv
+numpy
+scikit-learn
+tqdm
+moviepy
+pillow
