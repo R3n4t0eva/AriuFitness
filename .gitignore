@@ -1,0 +1,10 @@
+echo "venv/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+*.pt
+*.pth
+*.h5
+*.ckpt
+" > .gitignore
