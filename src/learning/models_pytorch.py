@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchinfo import summary
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 import optuna
-import util
+from logic import util
 
 
 # Dispositivo su cui eseguire il training: GPU se disponibile, altrimenti CPU

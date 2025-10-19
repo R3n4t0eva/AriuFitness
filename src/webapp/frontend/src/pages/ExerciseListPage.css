@@ -1,0 +1,114 @@
+/* Contenitore principale della pagina, che centra il pannello */
+.page-container {
+    /* Usa la griglia per centrare, è il metodo più robusto */
+    display: grid;
+    place-items: center; /* Centra sia in orizzontale che in verticale */
+    min-height: calc(100vh - 80px); /* Altezza schermo MENO l'altezza dell'header globale */
+    padding: 30px;
+    box-sizing: border-box;
+}
+  
+  /* Card di vetro principale con dimensioni fisse e stabili */
+  .page-card {
+    width: 90%;
+    max-width: 700px;
+    height: 80vh; /* Altezza fissa rispetto allo schermo */
+    max-height: 600px; /* Limite di altezza massima */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Impedisce al contenuto di "scappare" e rompere il layout */
+  }
+  
+  /* Header interno della pagina */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    
+    flex-shrink: 0; /* Non si rimpicciolisce */
+  }
+  
+  .page-header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+  }
+  
+  /* Layout a due colonne che non si deforma */
+  .content-layout {
+    display: grid;
+    grid-template-columns: 1fr 2.5fr; /* Colonna lista più stretta, colonna video più larga */
+    gap: 30px;
+    flex-grow: 1;
+    overflow: hidden;
+    /* La riga si adatta allo spazio disponibile senza rompere il layout */
+    grid-template-rows: minmax(0, 1fr);
+  }
+  
+  /* Colonna sinistra: Lista Esercizi */
+  .exercise-menu {
+    overflow-y: auto; /* Permette di scrollare solo la lista se è lunga */
+    padding-right: 15px;
+  }
+  
+  .exercise-list { list-style-type: none; padding: 0; margin: 0; }
+  .exercise-item {
+    display: block;
+    width: 100%;
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    color: white;
+    border: 1px solid transparent;
+  }
+  .exercise-item:hover { background: rgba(0, 0, 0, 0.4); }
+  .exercise-item.active-exercise {
+    background: var(--primary-color);
+    font-weight: 600;
+  }
+  
+  /* Pannello Video (colonna destra) */
+  .video-player-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  .video-player-panel .video-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  
+  .video-player-panel video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  /* Testo placeholder quando nessun video è selezionato */
+  .video-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.2rem;
+    padding: 20px;
+    text-align: center;
+  }

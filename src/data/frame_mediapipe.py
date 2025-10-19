@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import util
+from logic import util
 
 class Frame:
     """
@@ -44,37 +44,38 @@ class Frame:
 
     def extract_keypoints(self):
         """
-        Funzione che estrae i keypoints dal frame con Mediapipe e mantiene solo quelli necessari.
+        Funzione che estrae i keypoints dal frame con Mediapipe e li salva tutti.
         """
-
+        # Usiamo una sola istanza di Pose per migliorare le performance
         with util.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
-            # Recolor dell'immagine
+            # Prepara l'immagine
             image = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
             image.flags.writeable = False
-            # Estrazione dei keypoints
+            
+            # Esegui il rilevamento
             results = pose.process(image)
-            # salvataggio dei landmarks necessari
+            
+            # Salva TUTTI i 33 landmarks se rilevati
             if results.pose_landmarks:
-                for i in range(len(results.pose_landmarks.landmark)):
-                    if i in Frame.keypoints_list:
-                        self.mediapipe_landmarks.append(results.pose_landmarks.landmark[i])
-                    else:
-                        self.mediapipe_landmarks.append(None)
-
-            # Creo un array dove ogni elemento rappresenta un keypoint di mediapipe e ogni keypoints è un dizionario con coordinate e visibilità
-            points = [None] * Frame.num_mediapipe_keypoints
-            for i in range(Frame.num_mediapipe_keypoints):
-                try:
-                    if i < len(results.pose_landmarks.landmark):  # se il punto è rilevato
-                        landmark = results.pose_landmarks.landmark[i]
-                        points[i] = {"x": landmark.x, "y": landmark.y, "z": landmark.z, "visibility": landmark.visibility}
-                    else:  # valori di default se il punto non è rilevato
-                        points[i] = {"x": 0.0, "y": 0.0, "z": 0.0, "visibility": 0.0}
-                except:  # valori di default in caso di errore nella rilevazione del punto
-                    points[i] = {"x": 0.0, "y": 0.0, "z": 0.0, "visibility": 0.0}
-
-            # Prendo in considerazione solo i keypoints necessari salvandoli nell'attributo keypoints
-            self.keypoints = np.array([points[i] for i in range(Frame.num_mediapipe_keypoints) if i in Frame.keypoints_list])
+                self.mediapipe_landmarks = results.pose_landmarks.landmark
+                
+                # Crea una lista di dizionari con tutti i 33 punti
+                points = []
+                for landmark in self.mediapipe_landmarks:
+                    points.append({
+                        "x": landmark.x, 
+                        "y": landmark.y, 
+                        "z": landmark.z, 
+                        "visibility": landmark.visibility
+                    })
+                
+                
+                # Salva l'array completo di 33 punti, senza filtrare nulla.
+                self.keypoints = np.array(points)
+                
+            else:
+                # Se non viene rilevata nessuna persona, crea un array vuoto
+                self.keypoints = np.array([])
 
 
     def extract_angles(self):

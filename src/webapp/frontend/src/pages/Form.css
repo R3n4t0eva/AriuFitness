@@ -1,0 +1,179 @@
+.form-page-container {
+    
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 10px;
+}
+  
+.form-card {
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.form-card h2 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.form-card form {
+    display: flex;
+    flex-direction: column;
+    width: 100%; 
+    gap: 15px; 
+}
+  
+.form-subtitle {
+    font-size: 1.1rem;
+    font-weight: 300;
+    margin-bottom: 30px;
+}
+  
+.form-card input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--text-color);
+    font-size: 1rem;
+    outline: none;
+}
+  
+.form-card input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+  
+.form-button {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    background: var(--primary-color);
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+  
+.form-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+  
+.error-message {
+    color: #ffcccc;
+    margin-top: 15px;
+}
+  
+.switch-form-text {
+    margin-top: 25px;
+}
+  
+.switch-form-link {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.login-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  /* --- Profilo: coerente con form-card --- */
+.profile-card {
+    /* riusa .form-card ma con un tocco di separazione interna */
+    gap: 14px;
+  }
+  
+  .profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.2);
+    display: grid;
+    place-items: center;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text-color);
+    overflow: hidden;
+    margin: 0 auto 6px;
+  }
+  .profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .profile-label {
+    color: rgba(255,255,255,0.85);
+    opacity: 0.9;
+  }
+  
+  .profile-value {
+    font-weight: 600;
+    color: var(--text-color);
+    word-break: break-word;
+  }
+  
+
+  /* azioni in basso allineate come nelle altre pagine */
+  .profile-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+  .profile-card h2,
+    .profile-card .form-subtitle {
+  color: #fff; /* oppure var(--text-color, #fff) se usi una CSS var */
+}
+
+/* centra la card in pagina */
+.profile-center {
+    min-height: 40dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  
+  /* riquadro interno, eredita font/colore dalla glass card */
+  .classcard {
+    font: inherit;
+    color: inherit;
+    padding: 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    margin-top: 12px;
+  }
+  
+  /* griglia info + layout righe */
+  .profile-info-grid { 
+    width: 100%;
+    display: grid;
+    gap: 12px;
+    padding: 14px 0;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+  }
+  .profile-row { display: grid; grid-template-columns: 160px 1fr; gap: 12px; }
+  .profile-label { opacity: .85; }
+  .profile-value { font-weight: 600; word-break: break-word; }
+  

@@ -1,4 +1,4 @@
-import util
+from logic import util
 
 class VideoParams:
 

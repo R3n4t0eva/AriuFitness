@@ -1,0 +1,203 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+:root {
+  width: 100%;
+  --primary-color: #2a9d8f; /* Un verde-acqua preso dall'ambiente */
+  --text-color: #ffffff;
+  --dark-text-color: #1a1a1a;
+  --background-main: #f4f1de; /* Un colore crema chiaro per elementi solidi */
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* --- NUOVE REGOLE PER LO SFONDO --- */
+  background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.5)), url('/background.jpg');
+  background-size: cover; /* Copre l'intera area */
+  background-position: center; /* Centra l'immagine */
+  background-attachment: fixed; /* L'immagine non scorre con la pagina */
+  min-height: 100vh;
+
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+.glass-card {
+  /* 1. Rendiamo lo sfondo più solido e meno trasparente */
+  background: rgba(25, 25, 25, 0.75); /* Sfondo grigio scuro, 75% opaco */
+  
+  /* 2. Disattiviamo temporaneamente il filtro per il debug */
+  /* backdrop-filter: blur(12px); */
+  /* -webkit-backdrop-filter: blur(12px); */
+
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 40px;
+  color: white; 
+}
+
+.global-header {
+  width: 100%;
+  padding: 15px 30px;
+  background: rgba(0, 0, 0, 0.4); /* Sfondo scuro semitrasparente */
+  backdrop-filter: blur(10px); /* Effetto vetro sfocato */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed; /* Rimane in cima allo schermo */
+  top: 0;
+  left: 0;
+  z-index: 100; /* Assicura che sia sopra tutto */
+  box-sizing: border-box;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Spazio tra logo e testo */
+}
+
+/* --- Il LOGO che ho pensato io (basato su CSS per ora) --- */
+.app-logo {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(45deg, #2a9d8f, #e9c46a); /* Gradiente vivace */
+  border-radius: 50%; /* Forma circolare */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+  box-shadow: 0 0 15px rgba(42, 157, 143, 0.6), 0 0 25px rgba(233, 196, 106, 0.4); /* Doppia ombra luminosa */
+}
+
+.app-logo::before {
+  content: 'AI'; /* Il testo dentro il logo */
+}
+
+/* --- Il TITOLO "FitnessAI " --- */
+.app-title-global {
+  font-family: 'Poppins', sans-serif;
+  font-size: 2.2rem; /* Dimensione notevole */
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  
+  /* Gradiente moderno per il testo */
+  background: linear-gradient(90deg, #80ed99, #2a9d8f); /* Da verde chiaro a verde scuro */
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent; /* Nasconde il colore del testo per mostrare il gradiente */
+  
+  text-shadow: 1px 1px 5px rgba(0,0,0,0.2); /* Leggera ombra per farlo risaltare */
+}
+
+.welcome-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 5rem; /* Molto grande per un impatto immediato */
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+  width: 100%;
+  
+  /* Ombra complessa per un effetto 3D e luminoso */
+  text-shadow: 
+    0 0 10px rgba(255, 255, 255, 0.7), /* alone luminoso bianco */
+    0 0 20px rgba(42, 157, 143, 0.5), /* alone colorato del tema */
+    4px 4px 15px rgba(0, 0, 0, 0.4);  /* ombra scura per profondità */
+
+  /* Leggera animazione all'apparizione */
+  animation: fadeInDown 1s ease-out;
+  
+  /* Spazio sotto il titolo */
+  margin-bottom: 30px; 
+}
+
+/* Animazione per il titolo */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-content {
+  padding-top: 80px; /* Deve essere circa l'altezza del tuo header */
+}
+
+#root, .page-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+  Assicura che il contenitore della Galleria Esercizi
+  usi lo spazio disponibile per centrare il suo contenuto.
+*/
+.page-container {
+  flex-grow: 1; /* Aggiungi questa riga */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

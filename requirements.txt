@@ -14,3 +14,6 @@ scikit-learn
 tqdm
 moviepy
 pillow
+python-jose
+passlib[bcrypt]
+fastapi[all]

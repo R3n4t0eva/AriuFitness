@@ -6,7 +6,7 @@ from imblearn.over_sampling import SMOTE
 #from data.video import Video
 from data.frame_mediapipe import Frame
 from data.video_params import VideoParams
-import util
+from logic import util
 from dotenv import load_dotenv
 
 load_dotenv()
