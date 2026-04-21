@@ -47,8 +47,7 @@ const GlobalHeader = () => {
   return (
     <header className="global-header">
       <div className="brand-section">
-        <div className="app-logo">EF</div>
-        <span className="app-title-global">ELDERFIT</span>
+        <span className="app-title-global">AriuFitness</span>
       </div>
 
       {showAuthButtons && (

@@ -6,7 +6,7 @@ function HomePage() {
   return (
     <div className="home-container">
       <div className="glass-card home-card">
-        <h1>Benvenuto in ElderFit!</h1>
+        <h1>Benvenuto in AiruFitness!</h1>
         <p className="home-subtitle">Cosa vuoi fare oggi?</p>
         
         <div className="button-container">

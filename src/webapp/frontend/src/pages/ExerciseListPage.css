@@ -26,14 +26,14 @@
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    
-    flex-shrink: 0; /* Non si rimpicciolisce */
+    border-bottom: 1px solid #d4c4b0;
+    flex-shrink: 0;
   }
   
   .page-header h1 {
     margin: 0;
     font-size: 1.8rem;
+    color: #8b5a3c;
   }
   
   /* Layout a due colonne che non si deforma */
@@ -60,17 +60,24 @@
     padding: 15px 20px;
     margin-bottom: 10px;
     border-radius: 10px;
-    background: rgba(0, 0, 0, 0.2);
+    background: #ffffff;
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: left;
-    color: white;
-    border: 1px solid transparent;
+    color: #2d2d2d;
+    border: 1px solid #d4c4b0;
+    font-weight: 500;
   }
-  .exercise-item:hover { background: rgba(0, 0, 0, 0.4); }
+  .exercise-item:hover {
+    background: #f5e6d3;
+    border-color: #8b5a3c;
+    transform: translateX(5px);
+  }
   .exercise-item.active-exercise {
-    background: var(--primary-color);
+    background: #8b5a3c;
+    color: #ffffff;
     font-weight: 600;
+    border-color: #6b4630;
   }
   
   /* Pannello Video (colonna destra) */
@@ -79,10 +86,11 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: rgba(0, 0, 0, 0.2);
+    background: #ffffff;
     border-radius: 15px;
     height: 100%;
     overflow: hidden;
+    border: 1px solid #d4c4b0;
   }
   
   .video-player-panel .video-container {

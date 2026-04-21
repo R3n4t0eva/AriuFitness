@@ -2,19 +2,23 @@
 
 :root {
   width: 100%;
-  --primary-color: #2a9d8f; /* Un verde-acqua preso dall'ambiente */
-  --text-color: #ffffff;
+  --primary-color: #8b5a3c; 
+  --secondary-color: #3d6b20;
+  --text-color: #2d2d2d;
+  --light-text: #ffffff;
   --dark-text-color: #1a1a1a;
-  --background-main: #f4f1de; /* Un colore crema chiaro per elementi solidi */
+  --background-main: #f5e6d3;
+  --card-bg: #ffffff;
+  --border-light: #d4c4b0;
 }
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #8b5a3c;
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: #3d6b20;
 }
 
 body {
@@ -22,18 +26,11 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
-  margin: 0;
   font-family: 'Poppins', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  /* --- NUOVE REGOLE PER LO SFONDO --- */
-  background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.5)), url('/background.jpg');
-  background-size: cover; /* Copre l'intera area */
-  background-position: center; /* Centra l'immagine */
-  background-attachment: fixed; /* L'immagine non scorre con la pagina */
-  min-height: 100vh;
-
+  background-color: #f5e6d3;
+  color: #2d2d2d;
 }
 
 h1 {
@@ -48,12 +45,15 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #8b5a3c;
+  color: #ffffff;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: all 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  background-color: #3d6b20;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 button:focus,
 button:focus-visible {
@@ -62,38 +62,33 @@ button:focus-visible {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    color: #2d2d2d;
+    background-color: #f5e6d3;
   }
   a:hover {
-    color: #747bff;
+    color: #3d6b20;
   }
   button {
-    background-color: #f9f9f9;
+    background-color: #8b5a3c;
+    color: #ffffff;
   }
 }
 
 .glass-card {
-  /* 1. Rendiamo lo sfondo più solido e meno trasparente */
-  background: rgba(25, 25, 25, 0.75); /* Sfondo grigio scuro, 75% opaco */
-  
-  /* 2. Disattiviamo temporaneamente il filtro per il debug */
-  /* backdrop-filter: blur(12px); */
-  /* -webkit-backdrop-filter: blur(12px); */
-
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: #ffffff;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid #d4c4b0;
   padding: 40px;
-  color: white; 
+  color: #2d2d2d;
 }
 
 .global-header {
   width: 100%;
   padding: 15px 30px;
-  background: rgba(0, 0, 0, 0.4); /* Sfondo scuro semitrasparente */
-  backdrop-filter: blur(10px); /* Effetto vetro sfocato */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: #8b5a3c;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #6b4630;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -110,27 +105,6 @@ button:focus-visible {
   gap: 15px; /* Spazio tra logo e testo */
 }
 
-/* --- Il LOGO che ho pensato io (basato su CSS per ora) --- */
-.app-logo {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(45deg, #2a9d8f, #e9c46a); /* Gradiente vivace */
-  border-radius: 50%; /* Forma circolare */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #fff;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
-  box-shadow: 0 0 15px rgba(42, 157, 143, 0.6), 0 0 25px rgba(233, 196, 106, 0.4); /* Doppia ombra luminosa */
-}
-
-.app-logo::before {
-  content: 'AI'; /* Il testo dentro il logo */
-}
-
 /* --- Il TITOLO "FitnessAI " --- */
 .app-title-global {
   font-family: 'Poppins', sans-serif;
@@ -138,29 +112,20 @@ button:focus-visible {
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 2px;
-  
-  /* Gradiente moderno per il testo */
-  background: linear-gradient(90deg, #80ed99, #2a9d8f); /* Da verde chiaro a verde scuro */
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent; /* Nasconde il colore del testo per mostrare il gradiente */
-  
-  text-shadow: 1px 1px 5px rgba(0,0,0,0.2); /* Leggera ombra per farlo risaltare */
+  color: #ffffff;
+  text-shadow: 1px 1px 5px rgba(0,0,0,0.2);
 }
 
 .welcome-title {
   font-family: 'Poppins', sans-serif;
   font-size: 5rem; /* Molto grande per un impatto immediato */
   font-weight: 700;
-  color: #ffffff;
+  color: #8b5a3c;
   text-align: center;
   width: 100%;
   
-  /* Ombra complessa per un effetto 3D e luminoso */
-  text-shadow: 
-    0 0 10px rgba(255, 255, 255, 0.7), /* alone luminoso bianco */
-    0 0 20px rgba(42, 157, 143, 0.5), /* alone colorato del tema */
-    4px 4px 15px rgba(0, 0, 0, 0.4);  /* ombra scura per profondità */
+  /* Ombra per eleganza */
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
   /* Leggera animazione all'apparizione */
   animation: fadeInDown 1s ease-out;
