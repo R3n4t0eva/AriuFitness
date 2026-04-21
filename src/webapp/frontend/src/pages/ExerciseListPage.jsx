@@ -4,18 +4,48 @@ import './ExerciseListPage.css'; // Creeremo questo file per lo stile
 import { useNavigate } from 'react-router-dom';
 import '../Dashboard.css'; // Per importare lo stile del bottone logout
 
+//in seguito verrà probabilmente cambiato con una chiamata a database o API
 const dailyExercises = [
-  "Estensioni delle Braccia", "Estensioni delle Braccia sulla Testa", "Alzate Laterali", 
-  "Squat da Seduto", "Alzata Gambe Laterale", "Addominali da Seduto"
+  "Medicine Ball Goblet Squat", "Affondi con palla medica", "Medicine Ball Burpees (con push-up sulla spalla)",
+   "Russian Twist", "Medicine Ball Sit-Up Throw", "Medicine Ball Chest Press Sit-Up", "Medicine Ball Halos", 
+   "Russian Twist (versione con piedi a terra)", "Wall Sit with Medicine Ball Rotation", "Long-Lever Russian Twist", 
+   "Medicine Ball Burpee", "Medicine Ball Thrusters", "Medicine Ball Sit-Up", "Pelvic Tilts", 
+   "Kneeling Stability Stretch", "Side Lean with Leg Support", "Arm Raises on Fitball", 
+   "Fitball Lateral Shifts", "Hamstring Curls on Fitball", "Fitball V-Pass", "Fitball Back Extensions", 
+   "Fitball Lat Stretch", "Fitball Glute Bridge", "Fitball Overhead Roll-Ups", "Stability Ball Active Sitting", 
+   "Overhead Ball Side Bends", "Stability Ball Crunches", "Fitball Elevated Leg Crunches"
 ];
 
+//in seguito verrà probabilmente cambiato con una chiamata a database o API
 const exerciseVideoMap = {
-    "Estensioni delle Braccia": "arms_extension",
-    "Estensioni delle Braccia sulla Testa": "arms_up",
-    "Alzate Laterali": "arms_lateral",
-    "Squat da Seduto": "chair_raises",
-    "Alzata Gambe Laterale": "leg_lateral",
-    "Addominali da Seduto": "seated_crunch"
+    "Medicine Ball Goblet Squat": "Medicine Ball Goblet Squat",
+    "Affondi con palla medica": "Affondi con palla medica",
+    "Medicine Ball Burpees (con push-up sulla spalla)": "Medicine Ball Burpees (con push-up sulla spalla) ",
+    "Russian Twist": "Russian Twist",
+    "Medicine Ball Sit-Up Throw": "Medicine Ball sit-up throw",
+    "Medicine Ball Chest Press Sit-Up": "Medicine Ball Chest Press Sit-Up",
+    "Medicine Ball Halos": "Medicine Ball Halos",
+    "Russian Twist (versione con piedi a terra)": "Russian Twist con piedi a terra",
+    "Wall Sit with Medicine Ball Rotation": "Wall Sit with Medicine Ball Rotation",
+    "Long-Lever Russian Twist": "Long-Lever Russian Twist",
+    "Medicine Ball Burpee": "Medicine Ball Burpee",
+    "Medicine Ball Thrusters": "Medicine Ball Thrusters",
+    "Medicine Ball Sit-Up": "Medicine Ball Sit-Up",
+    "Pelvic Tilts": "Pelvic Tilts",
+    "Kneeling Stability Stretch": "Kneeling Stability Stretch",
+    "Side Lean with Leg Support": "Side Lean with Leg Support",
+    "Arm Raises on Fitball": "Arm Raises on Fitball",
+    "Fitball Lateral Shifts": "Fitball Lateral Shifts",
+    "Hamstring Curls on Fitball": "Hamstring Curls on Fitball",
+    "Fitball V-Pass": "Fitball V-Pass",
+    "Fitball Back Extensions": "Fitball Back Extensions",
+    "Fitball Lat Stretch": "Fitball Lat Stretch",
+    "Fitball Glute Bridge": "Fitball Glute Bridge",
+    "Fitball Overhead Roll-Ups": "Fitball Overhead Roll-Ups",
+    "Stability Ball Active Sitting": "Stability Ball Active Sitting",
+    "Overhead Ball Side Bends": "Overhead Ball Side Bends",
+    "Stability Ball Crunches": "Stability Ball Crunches",
+    "Fitball Elevated Leg Crunches": "Fitball Elevated Leg Crunches"
   };
 
 function ExerciseListPage() {
