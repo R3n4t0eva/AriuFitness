@@ -19,7 +19,10 @@ from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 
 # Contesto per l'hashing della password
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Usiamo PBKDF2-SHA256 per evitare:
+# - incompatibilità passlib<->bcrypt su Python recenti
+# - limite bcrypt dei 72 byte sulla password
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 # Configurazione per i token JWT
 SECRET_KEY = "la-tua-chiave-segreta-super-difficile" # CAMBIA QUESTA CHIAVE!
@@ -87,7 +90,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from logic.classification import Classification
 
 # 1. Inizializzazione dell'app FastAPI
-app = FastAPI(title="TrainerAI API")
+app = FastAPI(title="ElderFit API")
 
 # --->>> 2. CONFIGURA IL MIDDLEWARE SUBITO DOPO <<<---
 app.add_middleware(
@@ -101,13 +104,18 @@ app.add_middleware(
 # Endpoint di test per verificare che il server sia attivo
 @app.get("/")
 def read_root():
-    return {"status": "TrainerAI server is running"}
+    return {"status": "ElderFit server is running"}
 
 # --- ENDPOINT DI REGISTRAZIONE E LOGIN ---
 
 @app.post("/register", response_model=UserBase)
 def register_user(user: UserCreate):
     """Registra un nuovo utente."""
+    if not user.password or len(user.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    if len(user.password.encode("utf-8")) > 1024:
+        raise HTTPException(status_code=400, detail="Password is too long")
+
     db_user = get_user(user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")

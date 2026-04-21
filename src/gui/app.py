@@ -3,12 +3,9 @@ from tkinter import ttk
 from tkinter import font as tkfont
 from PIL import Image, ImageTk
 import os
-import threading
 import cv2
 import numpy as np
 
-from data.dataset import Dataset
-from learning.models_pytorch import create_model
 from logic.classification import Classification
 from logic.users import Users
 import logic.util as util
@@ -56,13 +53,12 @@ class GUI:
         self.build_frame_learning()  # Costruisce i contenuti di frame_learning
         self.build_frame_login()  # Costruisce i contenuti di frame_login
         
-        self.create_threads()  # Creazione dei thread
-
         self.users = Users()  # Oggetto di gestione degli utenti
 
         self.classification_window = None  # Finestra di classificazione
         self.last_frame_time = 0  # Tempo dell'ultimo frame
-        self.classification = Classification(os.path.join(util.getBasePath(), "models", "LSTM_Combo2.pth"))  # Oggetto di classificazione
+        # Modalità demo: nessun modello AI viene caricato
+        self.classification = Classification(None)  # Oggetto di classificazione (demo)
         self.choice_keypoints = False  # Scelta per visualizzare i keypoints
         self.cap = None  # Oggetto per la cattura della webcam
 
@@ -144,7 +140,13 @@ class GUI:
         button_frame.pack(pady=50)
 
         # Pulsante 1 con icona e testo
-        button1 = ttk.Button(button_frame, text="Train the model", compound="top", image=self.icon_home_first_button, command=lambda: self.show_frame(self.frame_learning))
+        button1 = ttk.Button(
+            button_frame,
+            text="Training (demo)",
+            compound="top",
+            image=self.icon_home_first_button,
+            command=lambda: self.show_frame(self.frame_learning),
+        )
         button1.image = self.icon_home_first_button  # Per mantenere il riferimento all'immagine
         button1.grid(row=0, column=0, padx=20)
 
@@ -168,10 +170,8 @@ class GUI:
         """
 
         # Frasi ed elementi delle fasi di creazione del modello
-        self.phases = {
-            "names": ["Creating the dataset", "Model training"],
-            "elements": []
-        }
+        # Modalità demo: training disattivato
+        self.phases = {"names": ["Demo mode"], "elements": []}
 
         # Titolo della finestra di creazione del modello
         self.model_title = tk.Label(self.frame_learning, text="Create the model", font=("Arial", 24))
@@ -216,13 +216,26 @@ class GUI:
         self.model_back_button.config(style="ModelButtons.TButton")
 
         # Pulsante per avviare la creazione del modello
-        self.model_play_button = ttk.Button(button_frame, text="Start", image=self.icon_model_start, compound="left", command=lambda: self.on_play_button_click())
+        self.model_play_button = ttk.Button(
+            button_frame,
+            text="Start",
+            image=self.icon_model_start,
+            compound="left",
+            command=lambda: self.on_play_button_click(),
+        )
         self.model_play_button.image = self.icon_model_start
         self.model_play_button.grid(row=0, column=1, padx=(10, 10))
         self.model_play_button.config(style="ModelButtons.TButton")
 
         # Pulsante per annullare la creazione del modello
-        self.model_cancel_button = ttk.Button(button_frame, text="Cancel", image=self.icon_model_cancel, compound="left", state="disabled", command=lambda: self.on_cancel_button_click())
+        self.model_cancel_button = ttk.Button(
+            button_frame,
+            text="Cancel",
+            image=self.icon_model_cancel,
+            compound="left",
+            state="disabled",
+            command=lambda: self.on_cancel_button_click(),
+        )
         self.model_cancel_button.image = self.icon_model_cancel
         self.model_cancel_button.grid(row=0, column=2, padx=(10, 0))
         self.model_cancel_button.config(style="ModelButtons.TButton")
@@ -597,47 +610,6 @@ class GUI:
         self.choice_keypoints = self.keypoint_var.get()
 
 
-    def create_threads(self):
-        """
-        Funzione che crea i thread per la creazione del dataset e del modello.
-        """
-
-        def update_progress_dataset(processed_videos, total_videos):
-            """
-            Funzione interna per l'aggiornamento del progresso della creazione del dataset.
-
-            Args:
-                processed_videos (int): Numero di video processati.
-                total_videos (int): Numero totale di video
-            """
-
-            self.phases["elements"][0][0].config(text=f"{processed_videos}/{total_videos}")
-
-        def start_creation_dataset():
-            """
-            Funzione interna per avviare la creazione del dataset.
-            """
-
-            Dataset().create(callback=update_progress_dataset)
-        
-        def start_creation_model():
-            """
-            Funzione interna per avviare la creazione del modello.
-            """
-
-            # Carico i dati di training e di validation
-            X1, X2, X3, y, num_classes = util.get_dataset("train")
-            X1_test, X2_test, X3_test, y_test, _ = util.get_dataset("test")
-            # Addestramento
-            create_model(X1, X2, X3, y, X1_test, X2_test, X3_test, y_test, num_classes)
-
-        # Creazione dei thread e impostazione delle variabili di controllo
-        self.dataset_thread = threading.Thread(target=start_creation_dataset)
-        self.model_thread = threading.Thread(target=start_creation_model)
-        self.dataset_thread_interrupted = False
-        self.model_thread_interrupted = False
-
-
     def show_frame(self, frame):
         """
         Funzione che mostra un frame/pagina.
@@ -655,110 +627,14 @@ class GUI:
         """
         Funzione che gestisce il click sul pulsante di avvio della creazione del modello.
         """
-
-        # Disabilita e abilita i pulsanti necessari
-        self.model_play_button.config(state="disabled")
-        self.model_cancel_button.config(state="normal")
-        self.model_back_button.config(state="disabled")
-        self.model_title.config(text="Model creation in progress...")
-        # Impostazione delle icone di caricamento
-        self.phases["elements"][0][1].config(image=self.icon_model_loading)
-        self.phases["elements"][0][1].image = self.icon_model_loading
-        self.phases["elements"][1][1].config(image=self.icon_model_wait)
-        self.phases["elements"][1][1].image = self.icon_model_wait
-        
-        # Creazione del dataset
-        self.dataset_thread.start()
-        self.dataset_thread_finished()
-
-
-    def dataset_thread_finished(self):
-        """
-        Funzione che gestisce la fine del thread di creazione del dataset.
-        """
-
-        if self.dataset_thread.is_alive(): # Finchè il thread è attivo
-            self.root.after(100, self.dataset_thread_finished) # Richiama la funzione dopo 100 ms
-        else:  # Se il thread è concluso
-            if not self.dataset_thread_interrupted:  # Se il thread non è stato interrotto
-                # Impostazione delle icone di completamento e caricamento
-                self.phases["elements"][0][1].config(image=self.icon_model_complete)
-                self.phases["elements"][0][1].image = self.icon_model_complete
-                self.phases["elements"][1][1].config(image=self.icon_model_loading)
-                self.phases["elements"][1][1].image = self.icon_model_loading
-                self.model_cancel_button.config(state="disabled")
-                # Avvio del thread di creazione del modello
-                self.model_thread.start()
-                self.model_thread_finished()
-            else:  # Se il thread è stato interrotto
-                self.model_title.config(text="Model creation interrupted")
-                # Impostazione delle icone di attesa
-                self.phases["elements"][0][1].config(image=self.icon_model_wait)
-                self.phases["elements"][0][1].image = self.icon_model_wait
-                self.phases["elements"][0][0].config(text="")
-                # Abilitazione dei pulsanti
-                self.model_play_button.config(state="normal")
-                self.model_back_button.config(state="normal")
-                self.dataset_thread_interrupted = False
-            # Attendo la fine del thread di creazione del dataset
-            self.dataset_thread.join()
-            # Ricreo i thread
-            self.create_threads()
-    
-
-    def model_thread_finished(self):
-        """
-        Funzione che gestisce la fine del thread di creazione del modello.
-        """
-
-        if self.model_thread.is_alive():  # Se il thread è attivo
-            self.root.after(100, self.model_thread_finished)  # Richiama la funzione dopo 100 ms
-        else:  # Se il thread è concluso
-            if not self.model_thread_interrupted:  # Se il thread non è stato interrotto
-                self.model_title.config(text="Model creation complete")
-                # Impostazione delle icone di completamento
-                self.phases["elements"][1][1].config(image=self.icon_model_complete)
-                self.phases["elements"][1][1].image = self.icon_model_complete
-                # Abilitazione e disabilitazione dei pulsanti
-                self.model_play_button.config(state="normal")
-                self.model_cancel_button.config(state="disabled")
-                self.model_back_button.config(state="normal")
-            else:  # Se il thread è stato interrotto
-                self.model_title.config(text="Model creation interrupted")
-                # Impostazione delle icone di attesa
-                self.phases["elements"][0][1].config(image=self.icon_model_wait)
-                self.phases["elements"][0][1].image = self.icon_model_wait
-                self.phases["elements"][1][1].config(image=self.icon_model_wait)
-                self.phases["elements"][1][1].image = self.icon_model_wait
-                self.phases["elements"][0][0].config(text="")
-                self.phases["elements"][1][0].config(text="")
-                # Abilitazione dei pulsanti
-                self.model_play_button.config(state="normal")
-                self.model_back_button.config(state="normal")
-                self.model_thread_interrupted = False
-            # Attendo la fine del thread di creazione del modello
-            self.model_thread.join()
-            # Ricreo i thread
-            self.create_threads()
+        self.model_title.config(text="Demo mode: training non disponibile")
 
 
     def on_cancel_button_click(self):
         """
         Funzione che gestisce il click sul pulsante di cancellazione della creazione del modello.
         """
-
-        if self.dataset_thread.is_alive():  # Se il thread del dataset è attivo
-            # Disabilita il pulsante e imposta il titolo
-            self.model_cancel_button.config(state="disabled")
-            self.model_title.config(text="Interrupting the process...")
-            self.dataset_thread_interrupted = True
-            # Interrompe il thread del dataset
-            Dataset().stop()
-        elif self.model_thread.is_alive():  # Se il thread del modello è attivo
-            # Disabilita il pulsante e imposta il titolo
-            self.model_cancel_button.config(state="disabled")
-            self.model_title.config(text="Interrupting the process...")
-            self.model_thread_interrupted = True
+        self.model_title.config(text="Demo mode: nulla da annullare")
 
 def start_application():
     """

@@ -6,7 +6,7 @@ import uvicorn
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 def main():
-    print("🚀 Benvenuto in FitnessAI!")
+    print("🚀 Benvenuto in ElderFit!")
     
     while True:
         choice = input("Scegli l'interfaccia: [1] GUI Desktop | [2] Web App: ")

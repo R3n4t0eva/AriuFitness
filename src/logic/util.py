@@ -3,18 +3,21 @@ import json
 import os
 from dotenv import load_dotenv
 import numpy as np
-import mediapipe as mp
-#import tensorflow as tf
-#import tensorflow_hub as hub
-import torch
-
-from learning.models_pytorch import MultiInputLSTM
+# NOTE: questa webapp/GUI può essere avviata senza dipendenze "AI".
+# Import pesanti (es. torch/mediapipe) sono opzionali e vengono caricati solo se richiesti.
 
 load_dotenv()
 
 
-mp_drawing = mp.solutions.drawing_utils
-mp_pose = mp.solutions.pose
+# mediapipe (opzionale)
+try:
+    import mediapipe as mp  # type: ignore
+    mp_drawing = mp.solutions.drawing_utils
+    mp_pose = mp.solutions.pose
+except Exception:  # pragma: no cover
+    mp = None
+    mp_drawing = None
+    mp_pose = None
 
 #movenet = hub.load("https://tfhub.dev/google/movenet/singlepose/lightning/4")
 #movenet = hub.load("https://www.kaggle.com/models/google/movenet/frameworks/TensorFlow2/variations/singlepose-lightning/versions/4")
@@ -152,6 +155,15 @@ def get_pytorch_model(model_path):
     Returns:
     - model (nn.Module): modello PyTorch
     """
+
+    try:
+        import torch  # type: ignore
+        from learning.models_pytorch import MultiInputLSTM
+    except Exception as e:  # pragma: no cover
+        raise RuntimeError(
+            "Dipendenze per il modello non disponibili (torch / learning.models_pytorch). "
+            "Questa installazione è in modalità 'senza AI'."
+        ) from e
 
     best_params = np.load(os.path.join(getModelsPath(), "best_params.npy"), allow_pickle=True).item()
     model = MultiInputLSTM(
@@ -300,7 +312,7 @@ def getVideoPath():
         str: il percorso della cartella dei video
     """
 
-    return os.path.join(getBasePath(), os.getenv("VIDEO_PATH"))
+    return os.path.join(getBasePath(), os.getenv("VIDEO_PATH") or "dataset")
 
 
 def getVideoInfoPath():
@@ -311,7 +323,7 @@ def getVideoInfoPath():
         str: il percorso della cartella delle informazioni sui video
     """
 
-    return os.path.join(getBasePath(), os.getenv("VIDEO_INFO_PATH"))
+    return os.path.join(getBasePath(), os.getenv("VIDEO_INFO_PATH") or "dataset")
 
 
 def getDatasetPath():
@@ -333,7 +345,7 @@ def getDatasetTestPath():
         str: il percorso della cartella del dataset di test
     """
 
-    return os.path.join(getBasePath(), "dataset", os.getenv("DATASET_TEST_PATH"))
+    return os.path.join(getBasePath(), "dataset", os.getenv("DATASET_TEST_PATH") or "test")
 
 
 def getModelsPath():
@@ -355,7 +367,7 @@ def getParametersPath():
         str: il percorso della cartella dei parametri
     """
 
-    return os.path.join(getBasePath(), "dataset", os.getenv("PARAMETERS_PATH"))
+    return os.path.join(getBasePath(), "dataset", os.getenv("PARAMETERS_PATH") or "parameters")
 
 
 def getUsersPath():
@@ -366,7 +378,7 @@ def getUsersPath():
         str: il percorso della cartella degli utenti
     """
 
-    return os.path.join(getBasePath(), os.getenv("USERS_PATH"))
+    return os.path.join(getBasePath(), os.getenv("USERS_PATH") or "users")
 
 
 def getWindowSize():
@@ -377,4 +389,4 @@ def getWindowSize():
         int: la dimensione della finestra
     """
 
-    return int(os.getenv("WINDOW_SIZE"))
+    return int(os.getenv("WINDOW_SIZE") or "8")
