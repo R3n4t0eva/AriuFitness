@@ -48,11 +48,60 @@ const exerciseVideoMap = {
     "Fitball Elevated Leg Crunches": "Fitball Elevated Leg Crunches"
   };
 
+// Categorie richieste: gambe e glutei, core e addominali, stretching e mobilità, full body ed esplosività
+const exerciseCategoryMap = {
+  // gambe e glutei
+  "Medicine Ball Goblet Squat": "gambe e glutei",
+  "Affondi con palla medica": "gambe e glutei",
+  "Wall Sit with Medicine Ball Rotation": "gambe e glutei",
+  "Hamstring Curls on Fitball": "gambe e glutei",
+  "Fitball Glute Bridge": "gambe e glutei",
+  "Fitball Lateral Shifts": "gambe e glutei",
+
+  // core e addominali
+  "Russian Twist": "core e addominali",
+  "Russian Twist (versione con piedi a terra)": "core e addominali",
+  "Long-Lever Russian Twist": "core e addominali",
+  "Medicine Ball Sit-Up Throw": "core e addominali",
+  "Medicine Ball Chest Press Sit-Up": "core e addominali",
+  "Medicine Ball Sit-Up": "core e addominali",
+  "Pelvic Tilts": "core e addominali",
+  "Fitball V-Pass": "core e addominali",
+  "Stability Ball Crunches": "core e addominali",
+  "Fitball Elevated Leg Crunches": "core e addominali",
+  "Fitball Overhead Roll-Ups": "core e addominali",
+  "Fitball Back Extensions": "core e addominali",
+
+  // stretching e mobilità
+  "Kneeling Stability Stretch": "stretching e mobilità",
+  "Side Lean with Leg Support": "stretching e mobilità",
+  "Arm Raises on Fitball": "stretching e mobilità",
+  "Fitball Lat Stretch": "stretching e mobilità",
+  "Stability Ball Active Sitting": "stretching e mobilità",
+  "Overhead Ball Side Bends": "stretching e mobilità",
+
+  // full body ed esplosività
+  "Medicine Ball Burpees (con push-up sulla spalla)": "full body ed esplosività",
+  "Medicine Ball Burpee": "full body ed esplosività",
+  "Medicine Ball Thrusters": "full body ed esplosività",
+  "Medicine Ball Halos": "full body ed esplosività",
+};
+
 function ExerciseListPage() {
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [videoUrl, setVideoUrl] = useState('');
   const navigate = useNavigate(); // Aggiungi questo hook
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('Tutti');
+  const [addedExercises, setAddedExercises] = useState([]);
+
+  const persistSelectedExercises = (list) => {
+    try {
+      localStorage.setItem('selectedExercises', JSON.stringify(list));
+    } catch (e) {
+      console.warn('Impossibile salvare selectedExercises in localStorage', e);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -70,6 +119,36 @@ function ExerciseListPage() {
     }
   };
 
+  const handleAddExercise = (exerciseName) => {
+    setAddedExercises((prev) => {
+      if (prev.includes(exerciseName)) return prev;
+      const next = [...prev, exerciseName];
+      persistSelectedExercises(next);
+      return next;
+    });
+  };
+
+  const handleRemoveExercise = (exerciseName) => {
+    setAddedExercises((prev) => {
+      const next = prev.filter((x) => x !== exerciseName);
+      persistSelectedExercises(next);
+      return next;
+    });
+  };
+
+  const categories = [
+    'Tutti',
+    'gambe e glutei',
+    'core e addominali',
+    'stretching e mobilità',
+    'full body ed esplosività',
+  ];
+
+  const filteredExercises = dailyExercises.filter((exerciseName) => {
+    if (selectedCategory === 'Tutti') return true;
+    return exerciseCategoryMap[exerciseName] === selectedCategory;
+  });
+
   return (
     <div className="page-container">
       <div className="glass-card page-card">
@@ -79,29 +158,151 @@ function ExerciseListPage() {
         </header>
         <div className="content-layout">
           <div className="exercise-menu">
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', marginBottom: 6 }}>
+                Filtra per categoria
+              </label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                style={{ width: '100%', padding: 8, borderRadius: 8 }}
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
             <ul className="exercise-list">
-              {dailyExercises.map((item, index) => (
-                <button 
-                  key={index} 
-                  className={selectedExercise === item ? 'exercise-item active-exercise' : 'exercise-item'}
-                  onClick={() => handleSelectExercise(item)}
+              {filteredExercises.map((item, index) => (
+                <li
+                  key={`${item}-${index}`}
+                  style={{
+                    listStyle: 'none',
+                    display: 'flex',
+                    gap: 8,
+                    alignItems: 'center',
+                    marginBottom: 8,
+                  }}
                 >
-                  {item}
-                </button>
+                  <button
+                    className={
+                      selectedExercise === item
+                        ? 'exercise-item active-exercise'
+                        : 'exercise-item'
+                    }
+                    onClick={() => handleSelectExercise(item)}
+                    style={{ flex: 1 }}
+                  >
+                    {item}
+                  </button>
+                </li>
               ))}
             </ul>
+
+            <div style={{ marginTop: 16 }}>
+              <h3 style={{ marginBottom: 8 }}>Lista esercizi aggiunti</h3>
+              {addedExercises.length === 0 ? (
+                <p style={{ opacity: 0.8, margin: 0 }}>
+                  Nessun esercizio aggiunto.
+                </p>
+              ) : (
+                <ul style={{ paddingLeft: 18, margin: 0 }}>
+                  {addedExercises.map((name) => (
+                    <li
+                      key={name}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                        marginBottom: 6,
+                      }}
+                    >
+                      <span>{name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExercise(name)}
+                        aria-label={`Rimuovi ${name}`}
+                        title="Rimuovi"
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 999,
+                          border: '1px solid rgba(255,255,255,0.25)',
+                          background: 'rgba(255,255,255,0.10)',
+                          color: 'inherit',
+                          cursor: 'pointer',
+                          lineHeight: '26px',
+                          textAlign: 'center',
+                          padding: 0,
+                          flex: '0 0 auto',
+                        }}
+                      >
+                        x
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() =>
+                  navigate('/allenamento', { state: { selectedExercises: addedExercises } })
+                }
+                disabled={addedExercises.length === 0}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  background: 'rgba(255,255,255,0.10)',
+                  color: 'inherit',
+                  cursor: addedExercises.length === 0 ? 'not-allowed' : 'pointer',
+                  opacity: addedExercises.length === 0 ? 0.6 : 1,
+                }}
+              >
+                Inizia allenamento
+              </button>
+            </div>
           </div>
           
           <div className="video-player-panel">
             {/* --- CONDIZIONE CORRETTA: usa videoUrl --- */}
             {videoUrl ? (
-              <div className="video-container">
-                <video key={videoUrl} controls autoPlay loop muted>
-                  <source src={videoUrl} type="video/mp4" />
-                  Il tuo browser non supporta i video.
-                </video>
-                
-              </div>
+              <>
+                <div className="video-container">
+                  <video key={videoUrl} controls autoPlay loop muted>
+                    <source src={videoUrl} type="video/mp4" />
+                    Il tuo browser non supporta i video.
+                  </video>
+                </div>
+                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleAddExercise(selectedExercise)}
+                    disabled={!selectedExercise || addedExercises.includes(selectedExercise)}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: 12,
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      background: 'rgba(255,255,255,0.10)',
+                      color: 'inherit',
+                      cursor:
+                        !selectedExercise || addedExercises.includes(selectedExercise)
+                          ? 'not-allowed'
+                          : 'pointer',
+                      opacity:
+                        !selectedExercise || addedExercises.includes(selectedExercise) ? 0.6 : 1,
+                    }}
+                  >
+                    Aggiungi
+                  </button>
+                </div>
+              </>
             ) : (
               <div className="video-placeholder">
                 <p>Seleziona un esercizio dalla lista per vedere il tutorial.</p>

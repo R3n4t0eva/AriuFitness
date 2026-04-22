@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import '../Dashboard.css';
 
-const dailyExercises = [
-  "Estensioni delle Braccia", "Estensioni delle Braccia sulla Testa", "Alzate Laterali", 
-  "Squat da Seduto", "Alzata Gambe Laterale", "Addominali da Seduto"
-];
+const DEFAULT_TARGET_REPS = 10;
 
 const exerciseVideoMap = {
   "Estensioni delle Braccia": "arms_extension",
@@ -30,6 +27,7 @@ function ClassificationPage() {
   const [reps, setReps] = useState(0);
   const [phrase, setPhrase] = useState('Seleziona un esercizio e attiva la webcam per iniziare.');
   const [selectedExercise, setSelectedExercise] = useState(null);
+  const [selectedExercises, setSelectedExercises] = useState([]);
   const [keypoints, setKeypoints] = useState([]);
   const [isWebcamActive, setIsWebcamActive] = useState(false);
   const [stream, setStream] = useState(null);
@@ -40,6 +38,11 @@ function ClassificationPage() {
   const [workoutComment, setWorkoutComment] = useState("");
   const [countdown, setCountdown] = useState(null); // Gestisce il numero del countdown (5, 4, 3...)
   const [isCountingActive, setIsCountingActive] = useState(false); // true solo dopo il countdown
+  const [isCompletedVisible, setIsCompletedVisible] = useState(false);
+  const [isStartLocked, setIsStartLocked] = useState(false);
+  const [webcamWarningMessage, setWebcamWarningMessage] = useState("");
+  const [isContinueAfterDifficultModalVisible, setIsContinueAfterDifficultModalVisible] = useState(false);
+  const [pendingAdvanceAfterDifficult, setPendingAdvanceAfterDifficult] = useState(false);
   
   // 1. STATO MANCANTE AGGIUNTO
   const [isConnected, setIsConnected] = useState(false); 
@@ -47,29 +50,103 @@ function ClassificationPage() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const overlayCanvasRef = useRef(null);
+  const tutorialVideoRef = useRef(null);
   const ws = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const clientId = useRef(Date.now().toString());
+  const isCountingActiveRef = useRef(false);
 
-  const handleFeedbackSubmit = (feedback) => {
-    console.log(`Feedback esercizio: ${feedback}`);
-    
-    // 1. Prima di tutto, chiude il pop-up
-    setIsFeedbackModalVisible(false);
-  
-    // 2. Calcola l'indice dell'esercizio successivo
+  useEffect(() => {
+    isCountingActiveRef.current = isCountingActive;
+  }, [isCountingActive]);
+
+  const pauseTutorialVideo = () => {
+    if (!tutorialVideoRef.current) return;
+    try {
+      tutorialVideoRef.current.pause();
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const resetExerciseRuntimeState = () => {
+    setCountdown(null);
+    setIsCountingActive(false);
+    setIsStartLocked(false);
+    setIsCompletedVisible(false);
+  };
+
+  useEffect(() => {
+    const fromNav = location?.state?.selectedExercises;
+    if (Array.isArray(fromNav) && fromNav.length > 0) {
+      setSelectedExercises(fromNav);
+      setCurrentExerciseIndex(0);
+      setSelectedExercise(null);
+      return;
+    }
+
+    try {
+      const raw = localStorage.getItem('selectedExercises');
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(parsed)) {
+        setSelectedExercises(parsed);
+        setCurrentExerciseIndex(0);
+        setSelectedExercise(null);
+      }
+    } catch (e) {
+      console.warn('selectedExercises non valido in localStorage', e);
+      setSelectedExercises([]);
+    }
+  }, [location?.state]);
+
+  const advanceAfterExerciseFeedback = () => {
     const nextIndex = currentExerciseIndex + 1;
-  
-    // 3. Controlla se ci sono ancora esercizi e, in caso affermativo, avanza
-    if (nextIndex < dailyExercises.length) {
-      setCurrentExerciseIndex(nextIndex); // <-- Questa è la riga che sblocca l'esercizio successivo
-      
-      // 4. Resetta lo stato per il nuovo esercizio
+
+    if (nextIndex < selectedExercises.length) {
+      setCurrentExerciseIndex(nextIndex);
       setSelectedExercise(null);
       setReps(0);
       setKeypoints([]);
       setPhrase("Seleziona il prossimo esercizio per continuare.");
+      resetExerciseRuntimeState();
+      return;
     }
+
+    // Se era l'ultimo esercizio, consideriamo la sessione finita
+    setCurrentExerciseIndex(selectedExercises.length);
+    setSelectedExercise(null);
+    setSelectedTutorial(null);
+    resetExerciseRuntimeState();
+    setPhrase('Hai Finito!');
+  };
+
+  const handleFeedbackSubmit = (feedback) => {
+    console.log(`Feedback esercizio: ${feedback}`);
+    setIsFeedbackModalVisible(false);
+
+    if (feedback === 'difficile') {
+      setPendingAdvanceAfterDifficult(true);
+      setIsContinueAfterDifficultModalVisible(true);
+      return;
+    }
+
+    advanceAfterExerciseFeedback();
+  };
+
+  const handleContinueAfterDifficultYes = () => {
+    setIsContinueAfterDifficultModalVisible(false);
+    if (pendingAdvanceAfterDifficult) {
+      setPendingAdvanceAfterDifficult(false);
+      advanceAfterExerciseFeedback();
+    }
+  };
+
+  const handleContinueAfterDifficultNo = () => {
+    setIsContinueAfterDifficultModalVisible(false);
+    setPendingAdvanceAfterDifficult(false);
+    stopWebcam();
+    navigate('/');
   };
 
   const handleFinishWorkout = (feedback) => {
@@ -100,7 +177,9 @@ function ClassificationPage() {
     };
     ws.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      setReps(data.repetitions);
+      if (isCountingActiveRef.current) {
+        setReps(data.repetitions);
+      }
       setPhrase(data.phrase);
       if (data.keypoints) {
         setKeypoints(data.keypoints);
@@ -148,6 +227,24 @@ function ClassificationPage() {
       startWebcam();
     }
   };
+
+  useEffect(() => {
+    // Se la webcam viene spenta durante l'esercizio, fermiamo tutorial e mettiamo in pausa la sessione.
+    if (isWebcamActive) {
+      setWebcamWarningMessage("");
+      return;
+    }
+
+    const wasInExercise = isStartLocked || countdown !== null || isCountingActive;
+    if (!wasInExercise) return;
+
+    pauseTutorialVideo();
+    resetExerciseRuntimeState();
+    const msg = 'Attenzione! Non riusciamo a rilevare la videocamera!';
+    setWebcamWarningMessage(msg);
+    setPhrase(msg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWebcamActive]);
   
   // --- 2. HOOK PER L'INVIO DEI FRAME (UNICO E CORRETTO) ---
    // --- 2. HOOK PER L'INVIO DEI FRAME (UNICO E CORRETTO) ---
@@ -243,7 +340,7 @@ function ClassificationPage() {
   
     // Pulisce il timer se il componente viene smontato
     return () => clearTimeout(timer);
-  }, [countdown]); // Questo hook dipende dal valore di countdown
+  }, [countdown, selectedExercise]); // Dipende anche dall'esercizio selezionato
 
   // --- FUNZIONI DI CONTROLLO ESERCIZIO E LOGOUT ---
   const handleLogout = () => {
@@ -253,33 +350,83 @@ function ClassificationPage() {
   };
 
   const handleExerciseSelect = (exerciseName) => {
-    if (!isWebcamActive) {
-      alert("Per favore, attiva la webcam prima di iniziare un esercizio.");
-      return;
-    }
-  
-    console.log(`Esercizio selezionato: ${exerciseName}, avvio countdown...`);
     setSelectedExercise(exerciseName);
     setReps(0);
     setIsCountingActive(false);
+    setCountdown(null);
+    setIsCompletedVisible(false);
+    setIsStartLocked(false);
+
+    if (ws.current?.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify({ type: 'reset_reps' }));
+    }
+
+    const videoFileSlug = exerciseVideoMap[exerciseName] ?? exerciseName;
+    if (videoFileSlug) setSelectedTutorial(`/videos/${videoFileSlug}.mp4`);
+    else setSelectedTutorial(null);
+  };
+
+  const handleStartExercise = () => {
+    if (!isWebcamActive || !selectedExercise) return;
+    if (isStartLocked) return;
+    setIsStartLocked(true);
+    setReps(0);
+    setIsCountingActive(false);
+    setIsCompletedVisible(false);
     setCountdown(5);
 
     if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({
-          type: 'reset_reps'
-      }));
+      ws.current.send(JSON.stringify({ type: 'reset_reps' }));
     }
-  
-    const videoFileSlug = exerciseVideoMap[exerciseName]; // Usa la mappa
-    if (videoFileSlug) {
-      const videoFileName = videoFileSlug + '.mp4';
-      setSelectedTutorial(`/videos/${videoFileName}`);
-    } else {
-      console.error(`Nome file video non trovato per l'esercizio: ${exerciseName}`);
-      setSelectedTutorial(null); // Nasconde il video se non c'è corrispondenza
-    }
-  
   };
+
+  const advanceToNextExercise = () => {
+    const nextIndex = currentExerciseIndex + 1;
+    if (nextIndex >= selectedExercises.length) {
+      setCurrentExerciseIndex(selectedExercises.length);
+      setSelectedExercise(null);
+      setSelectedTutorial(null);
+      setIsCountingActive(false);
+      setCountdown(null);
+      setIsStartLocked(false);
+      setPhrase('Hai Finito!');
+      return;
+    }
+
+    setCurrentExerciseIndex(nextIndex);
+    const nextExerciseName = selectedExercises[nextIndex];
+    handleExerciseSelect(nextExerciseName);
+    setPhrase('Pronto per il prossimo esercizio. Premi Inizia quando vuoi partire.');
+  };
+
+  const currentTargetReps = DEFAULT_TARGET_REPS;
+  const remainingReps = Math.max(currentTargetReps - reps, 0);
+
+  useEffect(() => {
+    if (!isCountingActive) return;
+    if (!selectedExercise) return;
+    if (reps < currentTargetReps) return;
+
+    setIsCompletedVisible(true);
+    setIsCountingActive(false);
+    setCountdown(null);
+
+    if (tutorialVideoRef.current) {
+      try {
+        tutorialVideoRef.current.pause();
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    const t = setTimeout(() => {
+      setIsCompletedVisible(false);
+      advanceToNextExercise();
+    }, 1000);
+
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reps, isCountingActive, selectedExercise]);
 
   // In ClassificationPage.jsx
 
@@ -293,6 +440,10 @@ function ClassificationPage() {
         type: 'reset_reps'
       }));
     }
+  };
+
+  const handleManualAddReps = (delta) => {
+    setReps((prev) => prev + delta);
   };
   // --- JSX RENDER ---
   // In ClassificationPage.jsx
@@ -315,12 +466,55 @@ function ClassificationPage() {
           {!isWebcamActive && (
             <div className="webcam-placeholder">
               <img src="/videocamera.png" alt="Attiva webcam" className="webcam-icon-img" />
-              <p>La tua webcam è disattivata.</p>
+              <p>{webcamWarningMessage || 'La tua webcam è disattivata.'}</p>
               <button onClick={handleWebcamToggle} className="webcam-toggle-button">Attiva Webcam</button>
             </div>
           )}
           {isWebcamActive && (
             <button onClick={handleWebcamToggle} className="webcam-toggle-button inside-video">Disattiva Webcam</button>
+          )}
+
+          {/* Avvio esercizio: nello stesso box della webcam */}
+          <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
+            {!isStartLocked && countdown === null && !isCountingActive ? (
+              <button
+                type="button"
+                onClick={handleStartExercise}
+                disabled={!isWebcamActive || !selectedExercise}
+                className="webcam-toggle-button"
+                style={{
+                  opacity: !isWebcamActive || !selectedExercise ? 0.6 : 1,
+                  cursor: !isWebcamActive || !selectedExercise ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Inizia
+              </button>
+            ) : (
+              <div />
+            )}
+            <div style={{ opacity: 0.85, textAlign: 'right' }}>
+              {selectedExercise ? (
+                <>
+                  <div style={{ fontWeight: 700 }}>{selectedExercise}</div>
+                  <div style={{ fontSize: 12 }}>
+                    Target: {currentTargetReps} ripetizioni
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: 12 }}>Seleziona un esercizio per partire</div>
+              )}
+            </div>
+          </div>
+
+          {isCompletedVisible && (
+            <div style={{ marginTop: 10, fontWeight: 900, color: '#2a9d8f', textAlign: 'center' }}>
+              Complimenti!
+            </div>
+          )}
+          {!isWebcamActive && webcamWarningMessage && (
+            <div style={{ marginTop: 10, fontWeight: 800, color: '#e76f51', textAlign: 'center' }}>
+              {webcamWarningMessage}
+            </div>
           )}
         </div>
 
@@ -328,7 +522,7 @@ function ClassificationPage() {
         <div id="tutorial-panel" className={`video-panel glass-card ${!selectedTutorial ? 'panel-hidden' : ''}`}>
           <div className="video-container">
             {selectedTutorial ? (
-              <video key={selectedTutorial} controls autoPlay loop muted>
+              <video ref={tutorialVideoRef} key={selectedTutorial} controls autoPlay loop muted>
                 <source src={selectedTutorial} type="video/mp4" />
               </video>
             ) : (
@@ -342,10 +536,37 @@ function ClassificationPage() {
         {/* Pannello Ripetizioni */}
         <div id="reps-panel" className="info-card glass-card">
           <div className="info-card-header">
-            <h3>RIPETIZIONI</h3>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+              <h3 style={{ margin: 0 }}>RIPETIZIONI</h3>
+              {selectedExercise && (isStartLocked || countdown !== null || isCountingActive) ? (
+                <span style={{ opacity: 0.85, fontWeight: 700, fontSize: 12 }}>
+                  Ancora {remainingReps}
+                </span>
+              ) : null}
+            </div>
             <button onClick={handleResetReps} className="reset-button">Azzera</button>
           </div>
           <p className="big-text">{reps}</p>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 8, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => handleManualAddReps(1)}
+              disabled={!selectedExercise || countdown !== null || !isCountingActive}
+              className="reset-button"
+              style={{ cursor: !selectedExercise || !isCountingActive ? 'not-allowed' : 'pointer', opacity: !selectedExercise || !isCountingActive ? 0.6 : 1 }}
+            >
+              +1
+            </button>
+            <button
+              type="button"
+              onClick={() => handleManualAddReps(5)}
+              disabled={!selectedExercise || countdown !== null || !isCountingActive}
+              className="reset-button"
+              style={{ cursor: !selectedExercise || !isCountingActive ? 'not-allowed' : 'pointer', opacity: !selectedExercise || !isCountingActive ? 0.6 : 1 }}
+            >
+              +5
+            </button>
+          </div>
         </div>
         
         {/* Pannello Feedback */}
@@ -357,22 +578,37 @@ function ClassificationPage() {
 
       {/* Sezione inferiore scorrevole */}
       <div id="workout-list-panel" className="info-card glass-card workout-list-card">
-        <h3>ALLENAMENTO GIORNALIERO</h3>
+        <h3>ESERCIZI SELEZIONATI</h3>
+        {selectedExercises.length === 0 ? (
+          <p style={{ marginTop: 8, opacity: 0.85 }}>
+            Non hai selezionato esercizi. Vai in <Link to="/visualizza-esercizi">Galleria Esercizi</Link> e aggiungili.
+          </p>
+        ) : null}
         <ul className="exercise-list">
-          {dailyExercises.map((item, index) => (
+          {selectedExercises.map((item, index) => (
             <button
               key={index}
               className={selectedExercise === item ? 'exercise-item active-exercise' : 'exercise-item'}
               onClick={() => handleExerciseSelect(item)}
-              disabled={index !== currentExerciseIndex}
+              disabled={index !== currentExerciseIndex || countdown !== null || isCountingActive}
             >
               {item}
             </button>
           ))}
         </ul>
+        {isCompletedVisible && (
+          <div style={{ marginTop: 10, fontWeight: 800, color: '#2a9d8f' }}>
+            Completato!
+          </div>
+        )}
+        {selectedExercises.length > 0 && currentExerciseIndex >= selectedExercises.length && (
+          <div style={{ marginTop: 10, fontWeight: 800 }}>
+            Hai Finito!
+          </div>
+        )}
         {selectedExercise && (
           <div className="action-buttons-container">
-            {currentExerciseIndex < dailyExercises.length - 1 && (
+            {currentExerciseIndex < selectedExercises.length - 1 && (
               <button className="finish-exercise-button" onClick={() => setIsFeedbackModalVisible(true)}>
                 Prossimo Esercizio
               </button>
@@ -422,6 +658,22 @@ function ClassificationPage() {
             >
               Invia Commento
             </button>
+          </div>
+        </div>
+      )}
+
+      {isContinueAfterDifficultModalVisible && (
+        <div className="modal-overlay">
+          <div className="glass-card modal-content">
+            <h3>Sei sicuro di riuscire a continuare?</h3>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 14, flexWrap: 'wrap' }}>
+              <button className="form-button" onClick={handleContinueAfterDifficultYes}>
+                Si, posso continuare
+              </button>
+              <button className="finish-workout-button" onClick={handleContinueAfterDifficultNo}>
+                No, voglio fermarmi
+              </button>
+            </div>
           </div>
         </div>
       )}

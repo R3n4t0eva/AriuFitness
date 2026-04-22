@@ -8,7 +8,7 @@ function HomePage() {
       <div className="home-content">
         <img src="/divano.png" alt="Divano esercizio" className="home-image" />
         
-        <Link to="/allenamento" className="start-workout-button">
+        <Link to="/visualizza-esercizi" className="start-workout-button">
           Inizia l'allenamento
         </Link>
       </div>
