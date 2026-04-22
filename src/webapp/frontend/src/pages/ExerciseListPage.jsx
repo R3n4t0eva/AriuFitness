@@ -218,6 +218,8 @@ function ExerciseListPage() {
                         justifyContent: 'space-between',
                         gap: 10,
                         marginBottom: 6,
+                        paddingBottom: 6,
+                        borderBottom: '1px solid #8b5a3c',
                       }}
                     >
                       <span>{name}</span>
@@ -229,10 +231,10 @@ function ExerciseListPage() {
                         style={{
                           width: 28,
                           height: 28,
-                          borderRadius: 999,
-                          border: '1px solid rgba(255,255,255,0.25)',
-                          background: 'rgba(255,255,255,0.10)',
-                          color: 'inherit',
+                          borderRadius: 6,
+                          border: '1px solid #ed3434',
+                          background: '#ed3434',
+                          color: 'white',
                           cursor: 'pointer',
                           lineHeight: '26px',
                           textAlign: 'center',
@@ -263,6 +265,7 @@ function ExerciseListPage() {
                   color: 'inherit',
                   cursor: addedExercises.length === 0 ? 'not-allowed' : 'pointer',
                   opacity: addedExercises.length === 0 ? 0.6 : 1,
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
                 }}
               >
                 Inizia allenamento
@@ -280,23 +283,25 @@ function ExerciseListPage() {
                     Il tuo browser non supporta i video.
                   </video>
                 </div>
-                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ marginTop: 12 }}>
                   <button
                     type="button"
                     onClick={() => handleAddExercise(selectedExercise)}
                     disabled={!selectedExercise || addedExercises.includes(selectedExercise)}
                     style={{
+                      width: '100%',
                       padding: '10px 14px',
                       borderRadius: 12,
-                      border: '1px solid rgba(255,255,255,0.25)',
-                      background: 'rgba(255,255,255,0.10)',
-                      color: 'inherit',
+                      border: 'none',
+                      background: '#8b5a3c',
+                      color: 'white',
                       cursor:
                         !selectedExercise || addedExercises.includes(selectedExercise)
                           ? 'not-allowed'
                           : 'pointer',
                       opacity:
                         !selectedExercise || addedExercises.includes(selectedExercise) ? 0.6 : 1,
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
                     }}
                   >
                     Aggiungi

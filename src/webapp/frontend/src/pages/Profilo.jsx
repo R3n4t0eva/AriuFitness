@@ -1,4 +1,3 @@
-// src/pages/Profilo.jsx
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Form.css'; // riuso stile esistente (form-page-container, form-card, form-button, ...)

@@ -73,7 +73,7 @@
 }
 
 .form-button:hover {
-    background: #3d6b20;
+    background: #d4c4b0;
     transform: translateY(-3px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
 }
@@ -90,7 +90,7 @@
 }
 
 .switch-form-link:hover {
-    color: #3d6b20;
+    color: #d4c4b0;
     text-decoration: underline;
 }
 
