@@ -17,6 +17,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
+from datetime import date
 
 # Contesto per l'hashing della password
 # Usiamo PBKDF2-SHA256 per evitare:
@@ -48,6 +49,11 @@ class UserInDB(UserBase):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class UserUpdate(BaseModel):
+    nome: Optional[str] = None
+    cognome: Optional[str] = None
+    data_nascita: Optional[str] = None
 
 # --- FUNZIONI HELPER ---
 
@@ -81,6 +87,39 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInDB:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+        token_data = TokenData(email=email)
+    except JWTError:
+        raise credentials_exception
+
+    user = get_user(token_data.email)
+    if user is None:
+        raise credentials_exception
+    return user
+
+def is_adult_yyyy_mm_dd(dob: str) -> bool:
+    # dob atteso "YYYY-MM-DD"
+    try:
+        y, m, d = [int(x) for x in dob.split("-")]
+        born = date(y, m, d)
+    except Exception:
+        return False
+    today = date.today()
+    age = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+    return age >= 18
 
 
 
@@ -153,6 +192,61 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
         data={"sub": user.email}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@app.get("/users/me", response_model=UserBase)
+def read_users_me(current_user: UserInDB = Depends(get_current_user)):
+    return UserBase(
+        email=current_user.email,
+        nome=current_user.nome,
+        cognome=current_user.cognome,
+        data_nascita=current_user.data_nascita,
+    )
+
+@app.put("/users/me", response_model=UserBase)
+def update_users_me(payload: UserUpdate, current_user: UserInDB = Depends(get_current_user)):
+    nome = payload.nome.strip() if payload.nome is not None else None
+    cognome = payload.cognome.strip() if payload.cognome is not None else None
+    data_nascita = payload.data_nascita.strip() if payload.data_nascita is not None else None
+
+    if nome is not None and not nome:
+        raise HTTPException(status_code=400, detail="Nome non valido")
+    if cognome is not None and not cognome:
+        raise HTTPException(status_code=400, detail="Cognome non valido")
+    if data_nascita is not None:
+        if not is_adult_yyyy_mm_dd(data_nascita):
+            raise HTTPException(status_code=400, detail="Devi essere maggiorenne (almeno 18 anni)")
+
+    try:
+        with open(USERS_DB_PATH, "r") as f:
+            users = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        users = []
+
+    updated = None
+    for i in range(len(users)):
+        if users[i].get("email") == current_user.email:
+            if nome is not None:
+                users[i]["nome"] = nome
+            if cognome is not None:
+                users[i]["cognome"] = cognome
+            if data_nascita is not None:
+                users[i]["data_nascita"] = data_nascita
+            updated = users[i]
+            break
+
+    if updated is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    with open(USERS_DB_PATH, "w") as f:
+        json.dump(users, f, indent=2)
+
+    return UserBase(
+        email=updated.get("email"),
+        nome=updated.get("nome", ""),
+        cognome=updated.get("cognome", ""),
+        data_nascita=updated.get("data_nascita", ""),
+    )
 
 
 # 3. Gestione della connessione WebSocket per la classificazione

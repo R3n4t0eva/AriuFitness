@@ -145,7 +145,35 @@
     display: flex;
     justify-content: flex-end;
     margin-top: 12px;
+    gap: 10px;
   }
+.form-button--secondary{
+  background: transparent;
+  border: 1px solid #8b5a3c;
+  color: #8b5a3c;
+}
+.form-button--secondary:hover{
+  background: #f5e6d3;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+}
+
+.profile-input{
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #d4c4b0;
+  background: #ffffff;
+  color: #2d2d2d;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.profile-input:focus{
+  border-color: #8b5a3c;
+  box-shadow: 0 0 0 3px rgba(139, 90, 60, 0.1);
+}
   .profile-card h2,
 .profile-card .form-subtitle {
   color: #8b5a3c;

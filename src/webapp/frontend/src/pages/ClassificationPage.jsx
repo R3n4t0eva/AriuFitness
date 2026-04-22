@@ -4,24 +4,6 @@ import '../Dashboard.css';
 
 const DEFAULT_TARGET_REPS = 10;
 
-const exerciseVideoMap = {
-  "Estensioni delle Braccia": "arms_extension",
-  "Estensioni delle Braccia sulla Testa": "arms_up",
-  "Alzate Laterali": "arms_lateral",
-  "Squat da Seduto": "chair_raises",
-  "Alzata Gambe Laterale": "leg_lateral",
-  "Addominali da Seduto": "seated_crunch"
-};
-
-const exerciseApiMap = {
-  "Estensioni delle Braccia": "arms_extension",
-  "Estensioni delle Braccia sulla Testa": "arms_up",
-  "Alzate Laterali": "arms_lateral",
-  "Squat da Seduto": "chair_raises",
-  "Alzata Gambe Laterale": "leg_lateral",
-  "Addominali da Seduto": "seated_crunch"
-};
-
 function ClassificationPage() {
   // --- STATI E REF ---
   const [reps, setReps] = useState(0);
@@ -246,7 +228,6 @@ function ClassificationPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWebcamActive]);
   
-  // --- 2. HOOK PER L'INVIO DEI FRAME (UNICO E CORRETTO) ---
    // --- 2. HOOK PER L'INVIO DEI FRAME (UNICO E CORRETTO) ---
    useEffect(() => {
     // Non fare nulla se la webcam non è attiva o il websocket non è connesso
@@ -645,19 +626,6 @@ function ClassificationPage() {
               <span onClick={() => handleFinishWorkout('medio')}>😐</span>
               <span onClick={() => handleFinishWorkout('facile')}>😊</span>
             </div>
-            <p className="feedback-separator">oppure lascia un commento</p>
-            <textarea 
-              className="feedback-comment"
-              placeholder="Scrivi qui il tuo commento..."
-              value={workoutComment}
-              onChange={(e) => setWorkoutComment(e.target.value)}
-            ></textarea>
-            <button 
-              className="form-button"
-              onClick={() => handleFinishWorkout('comment')}
-            >
-              Invia Commento
-            </button>
           </div>
         </div>
       )}
