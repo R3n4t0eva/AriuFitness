@@ -1,99 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './ExerciseListPage.css'; // Creeremo questo file per lo stile
 import { useNavigate } from 'react-router-dom';
 import '../Dashboard.css'; // Per importare lo stile del bottone logout
-
-//in seguito verrà probabilmente cambiato con una chiamata a database o API
-const dailyExercises = [
-  "Medicine Ball Goblet Squat", "Affondi con palla medica", "Medicine Ball Burpees (con push-up sulla spalla)",
-   "Russian Twist", "Medicine Ball Sit-Up Throw", "Medicine Ball Chest Press Sit-Up", "Medicine Ball Halos", 
-   "Russian Twist (versione con piedi a terra)", "Wall Sit with Medicine Ball Rotation", "Long-Lever Russian Twist", 
-   "Medicine Ball Burpee", "Medicine Ball Thrusters", "Medicine Ball Sit-Up", "Pelvic Tilts", 
-   "Kneeling Stability Stretch", "Side Lean with Leg Support", "Arm Raises on Fitball", 
-   "Fitball Lateral Shifts", "Hamstring Curls on Fitball", "Fitball V-Pass", "Fitball Back Extensions", 
-   "Fitball Lat Stretch", "Fitball Glute Bridge", "Fitball Overhead Roll-Ups", "Stability Ball Active Sitting", 
-   "Overhead Ball Side Bends", "Stability Ball Crunches", "Fitball Elevated Leg Crunches"
-];
-
-//in seguito verrà probabilmente cambiato con una chiamata a database o API
-const exerciseVideoMap = {
-    "Medicine Ball Goblet Squat": "Medicine Ball Goblet Squat",
-    "Affondi con palla medica": "Affondi con palla medica",
-    "Medicine Ball Burpees (con push-up sulla spalla)": "Medicine Ball Burpees (con push-up sulla spalla) ",
-    "Russian Twist": "Russian Twist",
-    "Medicine Ball Sit-Up Throw": "Medicine Ball sit-up throw",
-    "Medicine Ball Chest Press Sit-Up": "Medicine Ball Chest Press Sit-Up",
-    "Medicine Ball Halos": "Medicine Ball Halos",
-    "Russian Twist (versione con piedi a terra)": "Russian Twist con piedi a terra",
-    "Wall Sit with Medicine Ball Rotation": "Wall Sit with Medicine Ball Rotation",
-    "Long-Lever Russian Twist": "Long-Lever Russian Twist",
-    "Medicine Ball Burpee": "Medicine Ball Burpee",
-    "Medicine Ball Thrusters": "Medicine Ball Thrusters",
-    "Medicine Ball Sit-Up": "Medicine Ball Sit-Up",
-    "Pelvic Tilts": "Pelvic Tilts",
-    "Kneeling Stability Stretch": "Kneeling Stability Stretch",
-    "Side Lean with Leg Support": "Side Lean with Leg Support",
-    "Arm Raises on Fitball": "Arm Raises on Fitball",
-    "Fitball Lateral Shifts": "Fitball Lateral Shifts",
-    "Hamstring Curls on Fitball": "Hamstring Curls on Fitball",
-    "Fitball V-Pass": "Fitball V-Pass",
-    "Fitball Back Extensions": "Fitball Back Extensions",
-    "Fitball Lat Stretch": "Fitball Lat Stretch",
-    "Fitball Glute Bridge": "Fitball Glute Bridge",
-    "Fitball Overhead Roll-Ups": "Fitball Overhead Roll-Ups",
-    "Stability Ball Active Sitting": "Stability Ball Active Sitting",
-    "Overhead Ball Side Bends": "Overhead Ball Side Bends",
-    "Stability Ball Crunches": "Stability Ball Crunches",
-    "Fitball Elevated Leg Crunches": "Fitball Elevated Leg Crunches"
-  };
-
-// Categorie richieste: gambe e glutei, core e addominali, stretching e mobilità, full body ed esplosività
-const exerciseCategoryMap = {
-  // gambe e glutei
-  "Medicine Ball Goblet Squat": "gambe e glutei",
-  "Affondi con palla medica": "gambe e glutei",
-  "Wall Sit with Medicine Ball Rotation": "gambe e glutei",
-  "Hamstring Curls on Fitball": "gambe e glutei",
-  "Fitball Glute Bridge": "gambe e glutei",
-  "Fitball Lateral Shifts": "gambe e glutei",
-
-  // core e addominali
-  "Russian Twist": "core e addominali",
-  "Russian Twist (versione con piedi a terra)": "core e addominali",
-  "Long-Lever Russian Twist": "core e addominali",
-  "Medicine Ball Sit-Up Throw": "core e addominali",
-  "Medicine Ball Chest Press Sit-Up": "core e addominali",
-  "Medicine Ball Sit-Up": "core e addominali",
-  "Pelvic Tilts": "core e addominali",
-  "Fitball V-Pass": "core e addominali",
-  "Stability Ball Crunches": "core e addominali",
-  "Fitball Elevated Leg Crunches": "core e addominali",
-  "Fitball Overhead Roll-Ups": "core e addominali",
-  "Fitball Back Extensions": "core e addominali",
-
-  // stretching e mobilità
-  "Kneeling Stability Stretch": "stretching e mobilità",
-  "Side Lean with Leg Support": "stretching e mobilità",
-  "Arm Raises on Fitball": "stretching e mobilità",
-  "Fitball Lat Stretch": "stretching e mobilità",
-  "Stability Ball Active Sitting": "stretching e mobilità",
-  "Overhead Ball Side Bends": "stretching e mobilità",
-
-  // full body ed esplosività
-  "Medicine Ball Burpees (con push-up sulla spalla)": "full body ed esplosività",
-  "Medicine Ball Burpee": "full body ed esplosività",
-  "Medicine Ball Thrusters": "full body ed esplosività",
-  "Medicine Ball Halos": "full body ed esplosività",
-};
+import { supabase } from '../SupabaseClient';
 
 function ExerciseListPage() {
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [videoUrl, setVideoUrl] = useState('');
-  const navigate = useNavigate(); // Aggiungi questo hook
+  const navigate = useNavigate();
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Tutti');
   const [addedExercises, setAddedExercises] = useState([]);
+  const [exercises, setExercises] = useState([]);
+  const [categories, setCategories] = useState(['Tutti']);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [selectedExerciseDetails, setSelectedExerciseDetails] = useState(null);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+
+  // Carica gli esercizi dal database
+  useEffect(() => {
+    const loadExercises = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('esercizi')
+          .select('id, nome, zona_allenamento, video_tut_url, palla, descrizione');
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          setExercises(data);
+          // Estrai le categorie uniche dai dati
+          const uniqueCategories = [...new Set(data.map(ex => ex.zona_allenamento).filter(Boolean))];
+          setCategories(['Tutti', ...uniqueCategories.sort()]);
+        }
+        setError(null);
+      } catch (err) {
+        console.error('Errore nel caricamento degli esercizi:', err);
+        setError('Errore nel caricamento degli esercizi');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadExercises();
+  }, []);
 
   const persistSelectedExercises = (list) => {
     try {
@@ -108,14 +64,14 @@ function ExerciseListPage() {
     navigate('/'); // Reindirizza alla pagina di scelta (che poi reindirizzerà al login)
   };
 
-  const handleSelectExercise = (exerciseName) => {
-    setSelectedExercise(exerciseName);
-    const videoFileSlug = exerciseVideoMap[exerciseName]; // Usa la mappa
-    if (videoFileSlug) {
-      setVideoUrl(`/videos/${videoFileSlug}.mp4`);
+  const handleSelectExercise = (exercise) => {
+    setSelectedExercise(exercise.nome);
+    setSelectedExerciseDetails(exercise);
+    if (exercise.video_tut_url) {
+      setVideoUrl(exercise.video_tut_url);
     } else {
-      console.error(`Nome file video non trovato per l'esercizio: ${exerciseName}`);
-      setVideoUrl(''); // Pulisce l'URL se non trova corrispondenza
+      console.warn(`URL video non trovato per l'esercizio: ${exercise.nome}`);
+      setVideoUrl('');
     }
   };
 
@@ -136,17 +92,10 @@ function ExerciseListPage() {
     });
   };
 
-  const categories = [
-    'Tutti',
-    'gambe e glutei',
-    'core e addominali',
-    'stretching e mobilità',
-    'full body ed esplosività',
-  ];
-
-  const filteredExercises = dailyExercises.filter((exerciseName) => {
+  // Filtra gli esercizi in base alla categoria selezionata
+  const filteredExercises = exercises.filter((exercise) => {
     if (selectedCategory === 'Tutti') return true;
-    return exerciseCategoryMap[exerciseName] === selectedCategory;
+    return exercise.zona_allenamento === selectedCategory;
   });
 
   return (
@@ -156,50 +105,59 @@ function ExerciseListPage() {
           <h1>Galleria Esercizi</h1>
           
         </header>
-        <div className="content-layout">
-          <div className="exercise-menu">
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', marginBottom: 6 }}>
-                Filtra per categoria
-              </label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                style={{ width: '100%', padding: 8, borderRadius: 8 }}
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <ul className="exercise-list">
-              {filteredExercises.map((item, index) => (
-                <li
-                  key={`${item}-${index}`}
-                  style={{
-                    listStyle: 'none',
-                    display: 'flex',
-                    gap: 8,
-                    alignItems: 'center',
-                    marginBottom: 8,
-                  }}
+        {loading ? (
+          <div style={{ padding: 20, textAlign: 'center' }}>
+            <p>Caricamento esercizi...</p>
+          </div>
+        ) : error ? (
+          <div style={{ padding: 20, textAlign: 'center', color: '#ed3434' }}>
+            <p>{error}</p>
+          </div>
+        ) : (
+          <div className="content-layout">
+            <div className="exercise-menu">
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', marginBottom: 6 }}>
+                  Filtra per categoria
+                </label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  style={{ width: '100%', padding: 8, borderRadius: 8 }}
                 >
-                  <button
-                    className={
-                      selectedExercise === item
-                        ? 'exercise-item active-exercise'
-                        : 'exercise-item'
-                    }
-                    onClick={() => handleSelectExercise(item)}
-                    style={{ flex: 1 }}
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <ul className="exercise-list">
+                {filteredExercises.map((exercise) => (
+                  <li
+                    key={exercise.id}
+                    style={{
+                      listStyle: 'none',
+                      display: 'flex',
+                      gap: 8,
+                      alignItems: 'center',
+                      marginBottom: 8,
+                    }}
                   >
-                    {item}
-                  </button>
-                </li>
-              ))}
-            </ul>
+                    <button
+                      className={
+                        selectedExercise === exercise.nome
+                          ? 'exercise-item active-exercise'
+                          : 'exercise-item'
+                      }
+                      onClick={() => handleSelectExercise(exercise)}
+                      style={{ flex: 1 }}
+                    >
+                      {exercise.nome}
+                    </button>
+                  </li>
+                ))}
+              </ul>
 
             <div style={{ marginTop: 16 }}>
               <h3 style={{ marginBottom: 8 }}>Lista esercizi aggiunti</h3>
@@ -283,29 +241,69 @@ function ExerciseListPage() {
                     Il tuo browser non supporta i video.
                   </video>
                 </div>
-                <div style={{ marginTop: 12 }}>
-                  <button
-                    type="button"
-                    onClick={() => handleAddExercise(selectedExercise)}
-                    disabled={!selectedExercise || addedExercises.includes(selectedExercise)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: 12,
-                      border: 'none',
-                      background: '#8b5a3c',
-                      color: 'white',
-                      cursor:
-                        !selectedExercise || addedExercises.includes(selectedExercise)
-                          ? 'not-allowed'
-                          : 'pointer',
-                      opacity:
-                        !selectedExercise || addedExercises.includes(selectedExercise) ? 0.6 : 1,
-                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
-                    }}
-                  >
-                    Aggiungi
-                  </button>
+                <div style={{ marginTop: 12, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  {selectedExerciseDetails?.palla && (
+                    <div style={{
+                      flex: 1,
+                      padding: 12,
+                      borderRadius: 8,
+                      background: 'rgba(59, 130, 246, 0.15)',
+                      border: '2px solid #3b82f6',
+                    }}>
+                      <p style={{ margin: 0, marginBottom: 6, fontSize: 12, opacity: 0.8 }}>
+                        Dimensioni palla da usare:
+                      </p>
+                      <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#3b82f6' }}>
+                        {selectedExerciseDetails.palla + " cm"}
+                      </p>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="button"
+                      onClick={() => handleAddExercise(selectedExercise)}
+                      disabled={!selectedExercise || addedExercises.includes(selectedExercise)}
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: 12,
+                        border: 'none',
+                        background: '#8b5a3c',
+                        color: 'white',
+                        cursor:
+                          !selectedExercise || addedExercises.includes(selectedExercise)
+                            ? 'not-allowed'
+                            : 'pointer',
+                        opacity:
+                          !selectedExercise || addedExercises.includes(selectedExercise) ? 0.6 : 1,
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+                        fontWeight: 500,
+                        minWidth: 100,
+                      }}
+                    >
+                      Aggiungi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDescriptionModal(true)}
+                      title="Leggi la descrizione dell'esercizio"
+                      style={{
+                        width: 30,
+                        height: 50,
+                        borderRadius: '50%',
+                        border: '2px solid #3437ed',
+                        background: '#3437ed',
+                        color: 'white',
+                        cursor: 'pointer',
+                        fontSize: 20,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      ⓘ
+                    </button>
+                  </div>
                 </div>
               </>
             ) : (
@@ -314,7 +312,80 @@ function ExerciseListPage() {
               </div>
             )}
           </div>
-        </div>
+        </div>        )}
+        
+        {/* Modal per la descrizione dell'esercizio */}
+        {showDescriptionModal && selectedExerciseDetails && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 100,
+              padding: 16,
+            }}
+            onClick={() => setShowDescriptionModal(false)}
+          >
+            <div
+              style={{
+                background: 'white',
+                borderRadius: 12,
+                padding: 24,
+                maxWidth: 500,
+                width: '100%',
+                maxHeight: '80vh',
+                overflowY: 'auto',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h2 style={{ margin: 0, color: '#333' }}>
+                  {selectedExerciseDetails.nome}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowDescriptionModal(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: 24,
+                    cursor: 'pointer',
+                    color: '#999',
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div style={{ marginBottom: 16 }}>
+                <h3 style={{ margin: '0 0 8px 0', color: '#8b5a3c', fontSize: 14 }}>
+                  Descrizione
+                </h3>
+                <p style={{ margin: 0, color: '#555', lineHeight: 1.6 }}>
+                  {selectedExerciseDetails.descrizione || 'Nessuna descrizione disponibile.'}
+                </p>
+              </div>
+              
+              {selectedExerciseDetails.palla && (
+                <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 8 }}>
+                  <h3 style={{ margin: '0 0 8px 0', color: '#8b5a3c', fontSize: 14 }}>
+                    Attrezzo utilizzato
+                  </h3>
+                  <p style={{ margin: 0, color: '#555', fontWeight: 500 }}>
+                    {selectedExerciseDetails.palla}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

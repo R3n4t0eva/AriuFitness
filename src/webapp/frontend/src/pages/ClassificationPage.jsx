@@ -476,6 +476,25 @@ function ClassificationPage() {
   const handleManualAddReps = (delta) => {
     setReps((prev) => prev + delta);
   };
+
+  const handleExerciseSelect = (exerciseName) => {
+    const exercise = selectedExercises.find(ex => ex === exerciseName);
+    if (exercise) {
+      setSelectedExercise(exercise);
+      // TODO: Qui puoi impostare il tutorial video se hai i dati
+      // setSelectedTutorial(tutorialUrl);
+      resetExerciseRuntimeState();
+    }
+  };
+
+  const handleStartExercise = () => {
+    if (!selectedExercise || !isWebcamActive) {
+      return;
+    }
+    setIsStartLocked(true);
+    setCountdown(5);
+  };
+
   // --- JSX RENDER ---
   // In ClassificationPage.jsx
 
@@ -484,29 +503,70 @@ function ClassificationPage() {
       {/* Sezione superiore fissa */}
       <div className="main-view-grid">
         {/* Pannello Webcam */}
-        <div className="video-panel glass-card">
+        <div className="video-panel glass-card" style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            justifyContent: 'flex-start',
+            position: 'relative',
+            minHeight: '300px',
+          }}>
+
+          {/* Contenitore della webcam (parte grande) */}
+          <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', borderRadius: '12px 12px 0 0' }}>
   
-          {/* Questo div aggiunge la classe 'hidden' solo se isWebcamActive è false */}
-          <div className={`video-container ${!isWebcamActive ? 'hidden' : ''}`}>
-            <video ref={videoRef} autoPlay playsInline muted className="webcam-feed" />
-            <canvas ref={overlayCanvasRef} className="overlay-canvas" />
-            <canvas ref={canvasRef} style={{ display: 'none' }} />
+            {/* Overlay info Esercizio: Sopra al centro */}
+            {selectedExercise && (
+              <div style={{
+                position: 'absolute',
+                top: '15px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 10,
+                textAlign: 'center',
+                background: 'rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(8px)',
+                padding: '8px 20px',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                width: 'fit-content',
+                whiteSpace: 'nowrap'
+              }}>
+                <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#1a1a1a', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {selectedExercise}
+                </div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.8, color: '#333' }}>
+                  Target: {currentTargetReps} ripetizioni
+                </div>
+              </div>
+            )}
+
+            {/* Video della webcam */}
+            <div className={`video-container ${!isWebcamActive ? 'hidden' : ''}`}>
+              <video ref={videoRef} autoPlay playsInline muted className="webcam-feed" />
+              <canvas ref={overlayCanvasRef} className="overlay-canvas" />
+              <canvas ref={canvasRef} style={{ display: 'none' }} />
+            </div>
+
+            {/* Placeholder quando webcam è spenta */}
+            {!isWebcamActive && (
+              <div className="webcam-placeholder">
+                <p>{webcamWarningMessage || 'La tua webcam è disattivata.'}</p>
+              </div>
+            )}
           </div>
 
-          {/* Il placeholder viene mostrato solo se isWebcamActive è false */}
-          {!isWebcamActive && (
-            <div className="webcam-placeholder">
-              <img src="/videocamera.png" alt="Attiva webcam" className="webcam-icon-img" />
-              <p>{webcamWarningMessage || 'La tua webcam è disattivata.'}</p>
+          {/* Contenitore pulsanti (parte piccola) */}
+          <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+            {/* Riga 1: Pulsante Attiva/Disattiva Webcam */}
+            {isWebcamActive && (
+              <button onClick={handleWebcamToggle} className="webcam-toggle-button inside-video">Disattiva Webcam</button>
+            )}
+            {!isWebcamActive && (
               <button onClick={handleWebcamToggle} className="webcam-toggle-button">Attiva Webcam</button>
-            </div>
-          )}
-          {isWebcamActive && (
-            <button onClick={handleWebcamToggle} className="webcam-toggle-button inside-video">Disattiva Webcam</button>
-          )}
+            )}
 
-          {/* Avvio esercizio: nello stesso box della webcam */}
-          <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
+            {/* Riga 2: Pulsante Inizia */}
             {!isStartLocked && countdown === null && !isCountingActive ? (
               <button
                 type="button"
@@ -520,33 +580,19 @@ function ClassificationPage() {
               >
                 Inizia
               </button>
-            ) : (
-              <div />
-            )}
-            <div style={{ opacity: 0.85, textAlign: 'right' }}>
-              {selectedExercise ? (
-                <>
-                  <div style={{ fontWeight: 700 }}>{selectedExercise}</div>
-                  <div style={{ fontSize: 12 }}>
-                    Target: {currentTargetReps} ripetizioni
-                  </div>
-                </>
-              ) : (
-                <div style={{ fontSize: 12 }}>Seleziona un esercizio per partire</div>
-              )}
-            </div>
-          </div>
+            ) : null}
 
-          {isCompletedVisible && (
-            <div style={{ marginTop: 10, fontWeight: 900, color: '#2a9d8f', textAlign: 'center' }}>
-              Complimenti!
-            </div>
-          )}
-          {!isWebcamActive && webcamWarningMessage && (
-            <div style={{ marginTop: 10, fontWeight: 800, color: '#e76f51', textAlign: 'center' }}>
-              {webcamWarningMessage}
-            </div>
-          )}
+            {isCompletedVisible && (
+              <div style={{ fontWeight: 900, color: '#2a9d8f', textAlign: 'center' }}>
+                Complimenti!
+              </div>
+            )}
+            {!isWebcamActive && webcamWarningMessage && (
+              <div style={{ fontWeight: 800, color: '#e76f51', textAlign: 'center' }}>
+                {webcamWarningMessage}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* PANNELLO TUTORIAL CON VISIBILITÀ CONDIZIONALE */}
@@ -602,7 +648,7 @@ function ClassificationPage() {
         
         {/* Pannello Feedback */}
         <div id="feedback-panel" className="info-card glass-card trainer-feedback">
-          <h3>FEEDBACK DEL TERAPISTA</h3>
+          <h3>FEEDBACK DEL COACH</h3>
           <p>{phrase}</p>
         </div>
       </div>
