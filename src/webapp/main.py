@@ -15,23 +15,16 @@ from typing import List, Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 from datetime import date
 
-# Contesto per l'hashing della password
-# Usiamo PBKDF2-SHA256 per evitare:
-# - incompatibilità passlib<->bcrypt su Python recenti
-# - limite bcrypt dei 72 byte sulla password
-pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+# Assicura che il server possa trovare i moduli nella cartella 'logic'
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from logic import database
 
-# Configurazione per i token JWT
-SECRET_KEY = "la-tua-chiave-segreta-super-difficile" # CAMBIA QUESTA CHIAVE!
+# Configurazione per i token JWT (per validare il token di Supabase)
+SECRET_KEY = "your-supabase-jwt-secret"  # Supabase fornisce questo
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-# Path al nostro "database" di utenti
-USERS_DB_PATH = "users/credentials.json"
 
 # --- MODELLI DATI (Pydantic) ---
 
@@ -44,9 +37,6 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
-class UserInDB(UserBase):
-    hashed_password: str
-
 class TokenData(BaseModel):
     email: Optional[str] = None
 
@@ -57,55 +47,36 @@ class UserUpdate(BaseModel):
 
 # --- FUNZIONI HELPER ---
 
-def get_user(email: str) -> Optional[UserInDB]:
-    """Cerca un utente per email nel nostro file JSON."""
+def get_user(email: str) -> Optional[UserBase]:
+    """Cerca un utente per email nel database Supabase."""
     try:
-        with open(USERS_DB_PATH, "r") as f:
-            users = json.load(f)
-        for user_data in users:
-            if user_data["email"] == email:
-                return UserInDB(**user_data)
-    except (FileNotFoundError, json.JSONDecodeError):
+        user_data = database.get_user_by_email(email)
+        if user_data:
+            return UserBase(**user_data)
         return None
-    return None
-
-def verify_password(plain_password, hashed_password):
-    """Verifica una password in chiaro con quella hashata."""
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password):
-    """Crea l'hash di una password."""
-    return pwd_context.hash(password)
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    """Crea un token di accesso JWT."""
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    except Exception as e:
+        print(f"Errore nel recuperare utente: {e}")
+        return None
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInDB:
+def get_current_user(token: str = Depends(oauth2_scheme)) -> UserBase:
+    """Valida il token Supabase e restituisce l'utente corrente."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
+        # Decodifica il token (Supabase usa JWT)
+        payload = jwt.decode(token, options={"verify_signature": False})  # Verifica off per MVP
+        email: str = payload.get("email")
         if email is None:
             raise credentials_exception
-        token_data = TokenData(email=email)
     except JWTError:
         raise credentials_exception
 
-    user = get_user(token_data.email)
+    user = get_user(email)
     if user is None:
         raise credentials_exception
     return user
@@ -121,11 +92,7 @@ def is_adult_yyyy_mm_dd(dob: str) -> bool:
     age = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
     return age >= 18
 
-
-
-
-# Assicura che il server possa trovare i moduli nella cartella 'logic'
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+# Import Classification
 from logic.classification import Classification
 
 # 1. Inizializzazione dell'app FastAPI
@@ -149,62 +116,65 @@ def read_root():
 
 @app.post("/register", response_model=UserBase)
 def register_user(user: UserCreate):
-    """Registra un nuovo utente."""
+    """Registra un nuovo utente usando Supabase Auth."""
     if not user.password or len(user.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
     if len(user.password.encode("utf-8")) > 1024:
         raise HTTPException(status_code=400, detail="Password is too long")
+    
+    if not is_adult_yyyy_mm_dd(user.data_nascita):
+        raise HTTPException(status_code=400, detail="Devi essere maggiorenne (almeno 18 anni)")
 
     db_user = get_user(user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    hashed_password = get_password_hash(user.password)
-    user_in_db = UserInDB(**user.dict(), hashed_password=hashed_password)
+    # Registra usando Supabase Auth (email + password)
+    # e crea il profilo nella tabella profili
+    result = database.registra_utente_auth(
+        email=user.email,
+        password=user.password,
+        nome=user.nome,
+        cognome=user.cognome,
+        data_nascita=user.data_nascita
+    )
     
-    users = []
-    try:
-        with open(USERS_DB_PATH, "r") as f:
-            users = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        pass # Il file non esiste o è vuoto
-        
-    users.append(user_in_db.dict())
-    
-    with open(USERS_DB_PATH, "w") as f:
-        json.dump(users, f, indent=2)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=f"Registration error: {result.get('error')}")
         
     return UserBase(**user.dict())
 
 
 @app.post("/token")
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    """Effettua il login e restituisce un token."""
-    user = get_user(form_data.username) # OAuth2 form usa 'username' per l'email
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    """Effettua il login usando Supabase Auth e restituisce un token."""
+    email = form_data.username  # OAuth2 form usa 'username' per l'email
+    password = form_data.password
+    
+    # Effettua il login usando Supabase Auth
+    result = database.login_utente(email, password)
+    
+    if not result["success"]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
+    
+    return {
+        "access_token": result["access_token"],
+        "refresh_token": result["refresh_token"],
+        "token_type": "bearer"
+    }
 
 
 @app.get("/users/me", response_model=UserBase)
-def read_users_me(current_user: UserInDB = Depends(get_current_user)):
-    return UserBase(
-        email=current_user.email,
-        nome=current_user.nome,
-        cognome=current_user.cognome,
-        data_nascita=current_user.data_nascita,
-    )
+def read_users_me(current_user: UserBase = Depends(get_current_user)):
+    return current_user
 
 @app.put("/users/me", response_model=UserBase)
-def update_users_me(payload: UserUpdate, current_user: UserInDB = Depends(get_current_user)):
+def update_users_me(payload: UserUpdate, current_user: UserBase = Depends(get_current_user)):
+    """Aggiorna i dati dell'utente nel database Supabase."""
     nome = payload.nome.strip() if payload.nome is not None else None
     cognome = payload.cognome.strip() if payload.cognome is not None else None
     data_nascita = payload.data_nascita.strip() if payload.data_nascita is not None else None
@@ -217,36 +187,81 @@ def update_users_me(payload: UserUpdate, current_user: UserInDB = Depends(get_cu
         if not is_adult_yyyy_mm_dd(data_nascita):
             raise HTTPException(status_code=400, detail="Devi essere maggiorenne (almeno 18 anni)")
 
-    try:
-        with open(USERS_DB_PATH, "r") as f:
-            users = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        users = []
-
-    updated = None
-    for i in range(len(users)):
-        if users[i].get("email") == current_user.email:
-            if nome is not None:
-                users[i]["nome"] = nome
-            if cognome is not None:
-                users[i]["cognome"] = cognome
-            if data_nascita is not None:
-                users[i]["data_nascita"] = data_nascita
-            updated = users[i]
-            break
-
-    if updated is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    with open(USERS_DB_PATH, "w") as f:
-        json.dump(users, f, indent=2)
-
+    # Aggiorna nel database Supabase
+    result = database.aggiorna_utente(
+        email=current_user.email,
+        nome=nome,
+        cognome=cognome,
+        data_nascita=data_nascita
+    )
+    
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=f"Update error: {result.get('error')}")
+    
+    updated = result.get("data", {})
     return UserBase(
         email=updated.get("email"),
         nome=updated.get("nome", ""),
         cognome=updated.get("cognome", ""),
         data_nascita=updated.get("data_nascita", ""),
     )
+
+'''
+# --- ENDPOINT PER ALLENAMENTI ---
+
+@app.post("/workouts/session")
+def save_workout_session(session_data: SessionData, current_user: UserBase = Depends(get_current_user)):
+    """Salva una sessione completa di allenamento nel database."""
+    try:
+        from datetime import datetime as dt
+        data_sessione = dt.utcnow().isoformat()
+        
+        # Salva gli esercizi nello storico
+        for esercizio in session_data.esercizi:
+            # Trova l'esercizio_id dalla tabella esercizi
+            esercizio_id = database.get_esercizio_id_by_nome(esercizio.esercizio)
+            if esercizio_id is None:
+                print(f"Warning: Esercizio '{esercizio.esercizio}' non trovato nel database")
+                continue
+            
+            risultato_json = {
+                "reps": esercizio.reps,
+                "accuratezza": esercizio.accuratezza,
+                "tempo_medio": esercizio.tempo_medio,
+                "difficolta": session_data.difficolta,
+                "commento": session_data.commento
+            }
+            
+            result = database.salva_allenamento(
+                email=current_user.email,
+                esercizio_id=esercizio_id,
+                risultato_cv=risultato_json
+            )
+            
+            if not result["success"]:
+                print(f"Errore nel salvataggio dell'esercizio {esercizio.esercizio}: {result.get('error')}")
+        
+        return {
+            "success": True,
+            "message": "Workout session saved successfully",
+            "data_sessione": data_sessione
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/workouts/history")
+def get_workout_history(current_user: UserBase = Depends(get_current_user)):
+    """Recupera la storia degli allenamenti dell'utente."""
+    try:
+        result = database.get_storico_completo(current_user.email)
+        
+        if not result["success"]:
+            raise HTTPException(status_code=400, detail=f"Error retrieving workouts: {result.get('error')}")
+        
+        return {"success": True, "data": result.get("data", [])}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 # 3. Gestione della connessione WebSocket per la classificazione
@@ -338,3 +353,4 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
         print(f"\n!!! ERRORE FATALE per client #{client_id} !!!")
         traceback.print_exc()
         manager.disconnect(client_id)
+'''

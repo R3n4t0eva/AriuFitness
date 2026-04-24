@@ -27,7 +27,12 @@ function ClassificationPage() {
   const [pendingAdvanceAfterDifficult, setPendingAdvanceAfterDifficult] = useState(false);
   
   // 1. STATO MANCANTE AGGIUNTO
-  const [isConnected, setIsConnected] = useState(false); 
+  const [isConnected, setIsConnected] = useState(false);
+  
+  // 2. STATO PER TRACCIARE GLI ESERCIZI COMPLETATI
+  const [completedExercises, setCompletedExercises] = useState([]);
+  const [exerciseStartTime, setExerciseStartTime] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -105,6 +110,10 @@ function ClassificationPage() {
 
   const handleFeedbackSubmit = (feedback) => {
     console.log(`Feedback esercizio: ${feedback}`);
+    
+    // Registra i dati dell'esercizio completato
+    recordExerciseCompletion(feedback);
+    
     setIsFeedbackModalVisible(false);
 
     if (feedback === 'difficile') {
@@ -114,6 +123,75 @@ function ClassificationPage() {
     }
 
     advanceAfterExerciseFeedback();
+  };
+
+  // --- FUNZIONE PER REGISTRARE IL COMPLETAMENTO DI UN ESERCIZIO ---
+  const recordExerciseCompletion = (userFeedback) => {
+    if (currentExerciseIndex >= selectedExercises.length) return;
+    
+    const currentExerciseName = selectedExercises[currentExerciseIndex];
+    const timeTaken = exerciseStartTime ? (Date.now() - exerciseStartTime) / 1000 : 0;
+    const avgTime = reps > 0 ? timeTaken / reps : 0;
+    
+    // Stima dell'accuratezza (in una app reale, verrebbe dal backend)
+    // Per ora usiamo un valore fisso calcolato dal feedback
+    let accuracy = 0.5;
+    if (userFeedback === 'facile') accuracy = 0.8;
+    if (userFeedback === 'medio') accuracy = 0.6;
+    if (userFeedback === 'difficile') accuracy = 0.4;
+    
+    const exerciseData = {
+      esercizio: currentExerciseName,
+      reps: reps,
+      accuratezza: accuracy,
+      tempo_medio: avgTime
+    };
+    
+    setCompletedExercises([...completedExercises, exerciseData]);
+    console.log(`Esercizio registrato: ${JSON.stringify(exerciseData)}`);
+  };
+
+  // --- FUNZIONE PER SALVARE LA SESSIONE AL BACKEND ---
+  const saveWorkoutSession = async (difficolta, commento) => {
+    if (completedExercises.length === 0) {
+      console.warn("Nessun esercizio da salvare");
+      return false;
+    }
+    
+    try {
+      setIsSaving(true);
+      const token = localStorage.getItem('token');
+      
+      const sessionData = {
+        esercizi: completedExercises,
+        difficolta: difficolta,
+        commento: commento
+      };
+      
+      const response = await fetch('http://127.0.0.1:8000/workouts/session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(sessionData)
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Errore nel salvataggio della sessione:", error);
+        return false;
+      }
+      
+      const result = await response.json();
+      console.log("Sessione salvata con successo:", result);
+      return true;
+    } catch (error) {
+      console.error("Errore durante il salvataggio della sessione:", error);
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleContinueAfterDifficultYes = () => {
@@ -131,13 +209,22 @@ function ClassificationPage() {
     navigate('/');
   };
 
-  const handleFinishWorkout = (feedback) => {
+  const handleFinishWorkout = async (feedback) => {
     // Se il feedback è un commento e non una faccina, usa il testo del commento
     const finalFeedback = feedback === 'comment' ? workoutComment : feedback;
     console.log(`Feedback finale allenamento: ${finalFeedback}`);
     
     // Chiudi il pop-up
     setIsWorkoutFeedbackModalVisible(false);
+    
+    // Salva la sessione al database tramite il backend
+    const saved = await saveWorkoutSession(finalFeedback, workoutComment);
+    
+    if (saved) {
+      console.log("Sessione salvata con successo!");
+    } else {
+      console.warn("Errore nel salvataggio della sessione, ma continuo comunque");
+    }
     
     // Spegni la webcam e altre pulizie se necessario
     stopWebcam();
@@ -303,6 +390,7 @@ function ClassificationPage() {
     if (countdown === 0) {
       setCountdown(null); // Nasconde il countdown
       setIsCountingActive(true); // Attiva il conteggio delle ripetizioni
+      setExerciseStartTime(Date.now()); // Registra l'inizio dell'esercizio
       
       // Invia il comando al backend per iniziare a contare
       if (ws.current?.readyState === WebSocket.OPEN && selectedExercise) {
@@ -322,44 +410,6 @@ function ClassificationPage() {
     // Pulisce il timer se il componente viene smontato
     return () => clearTimeout(timer);
   }, [countdown, selectedExercise]); // Dipende anche dall'esercizio selezionato
-
-  // --- FUNZIONI DI CONTROLLO ESERCIZIO E LOGOUT ---
-  const handleLogout = () => {
-    stopWebcam();
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
-
-  const handleExerciseSelect = (exerciseName) => {
-    setSelectedExercise(exerciseName);
-    setReps(0);
-    setIsCountingActive(false);
-    setCountdown(null);
-    setIsCompletedVisible(false);
-    setIsStartLocked(false);
-
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({ type: 'reset_reps' }));
-    }
-
-    const videoFileSlug = exerciseVideoMap[exerciseName] ?? exerciseName;
-    if (videoFileSlug) setSelectedTutorial(`/videos/${videoFileSlug}.mp4`);
-    else setSelectedTutorial(null);
-  };
-
-  const handleStartExercise = () => {
-    if (!isWebcamActive || !selectedExercise) return;
-    if (isStartLocked) return;
-    setIsStartLocked(true);
-    setReps(0);
-    setIsCountingActive(false);
-    setIsCompletedVisible(false);
-    setCountdown(5);
-
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({ type: 'reset_reps' }));
-    }
-  };
 
   const advanceToNextExercise = () => {
     const nextIndex = currentExerciseIndex + 1;
