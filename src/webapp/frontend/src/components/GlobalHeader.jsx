@@ -61,17 +61,14 @@ const GlobalHeader = () => {
                 className="avatar-btn"
                 onClick={() => setOpen(v => !v)}
               >
-                {user?.avatar_url
-                  ? <img src={user.avatar_url} alt="avatar" />
-                  : <span>{initials(user)}</span>
-                }
+                {user?.avatar_url ? <img src={user.avatar_url} alt="avatar" /> : <img src="/blank-avatar.png" alt="avatar" className='avatar-image' />}
               </button>
 
               {open && (
                 <div className="gh-menu">
                   <div className="gh-user-row">
                     <div className="gh-avatar small">
-                      {user?.avatar_url ? <img src={user.avatar_url} alt="avatar" /> : <span>{initials(user)}</span>}
+                      {user?.avatar_url ? <img src={user.avatar_url} alt="avatar" /> : <img src="/blank-avatar.png" alt="avatar" className='avatar-image' />}
                     </div>
                     <div className="gh-user-info">
                       <div className="gh-name">Utente</div>

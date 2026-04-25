@@ -108,24 +108,23 @@ function ExerciseListPage() {
           
         </header>
         {loading ? (
-          <div style={{ padding: 20, textAlign: 'center' }}>
+          <div className='loading'>
             <p>Caricamento esercizi...</p>
           </div>
         ) : error ? (
-          <div style={{ padding: 20, textAlign: 'center', color: '#ed3434' }}>
+          <div className='error'>
             <p>{error}</p>
           </div>
         ) : (
           <div className="content-layout">
             <div className="exercise-menu">
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', marginBottom: 6 }}>
+              <div className="filter-section">
+                <label>
                   Filtra per categoria
                 </label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  style={{ width: '100%', padding: 8, borderRadius: 8 }}
                 >
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>
@@ -136,19 +135,10 @@ function ExerciseListPage() {
               </div>
               <ul className="exercise-list">
                 {filteredExercises.map((exercise) => (
-                  <li
-                    key={exercise.id}
-                    style={{
-                      listStyle: 'none',
-                      display: 'flex',
-                      gap: 8,
-                      alignItems: 'center',
-                      marginBottom: 8,
-                    }}
-                  >
+                  <li key={exercise.id}>
                     <button
                       className={
-                        selectedExercise === exercise
+                        selectedExercise === exercise.nome
                           ? 'exercise-item active-exercise'
                           : 'exercise-item'
                       }
@@ -161,47 +151,21 @@ function ExerciseListPage() {
                 ))}
               </ul>
 
-            <div style={{ marginTop: 16 }}>
-              <h3 style={{ marginBottom: 8 }}>Lista esercizi aggiunti</h3>
+            <div className='added-exercises'>
+              <h3>Lista esercizi aggiunti</h3>
               {addedExercises.length === 0 ? (
-                <p style={{ opacity: 0.8, margin: 0 }}>
-                  Nessun esercizio aggiunto.
-                </p>
+                <p> Nessun esercizio aggiunto. </p>
               ) : (
-                <ul style={{ paddingLeft: 18, margin: 0 }}>
+                <ul>
                   {addedExercises.map((exercise) => (
-                    <li
-                      key={exercise.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 10,
-                        marginBottom: 6,
-                        paddingBottom: 6,
-                        borderBottom: '1px solid #8b5a3c',
-                      }}
-                    >
+                    <li key={exercise.id}>
                       <span>{exercise.nome}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveExercise(exercise.id)}
                         aria-label={`Rimuovi ${exercise.nome}`}
                         title="Rimuovi"
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: 6,
-                          border: '1px solid #ed3434',
-                          background: '#ed3434',
-                          color: 'white',
-                          cursor: 'pointer',
-                          lineHeight: '26px',
-                          textAlign: 'center',
-                          padding: 0,
-                          flex: '0 0 auto',
-                        }}
-                      >
+                        >
                         x
                       </button>
                     </li>
@@ -210,23 +174,14 @@ function ExerciseListPage() {
               )}
             </div>
 
-            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+            <div className='start-bttn'>
               <button
                 type="button"
                 onClick={() =>
                   navigate('/allenamento', { state: { selectedExercises: addedExercises } })
                 }
                 disabled={addedExercises.length === 0}
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: 12,
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  background: 'rgba(255,255,255,0.10)',
-                  color: 'inherit',
-                  cursor: addedExercises.length === 0 ? 'not-allowed' : 'pointer',
-                  opacity: addedExercises.length === 0 ? 0.6 : 1,
-                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
-                }}
+                
               >
                 Inizia allenamento
               </button>
@@ -243,65 +198,38 @@ function ExerciseListPage() {
                     Il tuo browser non supporta i video.
                   </video>
                 </div>
-                <div style={{ marginTop: 12, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <div className='exercise-details'>
                   {selectedExerciseDetails?.palla && (
-                    <div style={{
-                      flex: 1,
-                      padding: 12,
-                      borderRadius: 8,
-                      background: 'rgba(59, 130, 246, 0.15)',
-                      border: '2px solid #3b82f6',
-                    }}>
-                      <p style={{ margin: 0, marginBottom: 6, fontSize: 12, opacity: 0.8 }}>
+                    <div className='info-ball'>
+                      <p className='info-ball-string'>
                         Dimensioni palla da usare:
                       </p>
-                      <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#3b82f6' }}>
+                      <p className='info-ball-data'>
                         {selectedExerciseDetails.palla + " cm"}
                       </p>
                     </div>
                   )}
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div className='add-exercise-section'>
                     <button
                       type="button"
                       onClick={() => handleAddExercise()}
                       disabled={!selectedExercise || addedExercises.some((ex) => ex.id === selectedExerciseDetails?.id)}
                       style={{
-                        padding: '10px 14px',
-                        borderRadius: 12,
-                        border: 'none',
-                        background: '#8b5a3c',
-                        color: 'white',
                         cursor:
                           !selectedExercise || addedExercises.some((ex) => ex.id === selectedExerciseDetails?.id)
                             ? 'not-allowed'
                             : 'pointer',
                         opacity:
                           !selectedExercise || addedExercises.some((ex) => ex.id === selectedExerciseDetails?.id) ? 0.6 : 1,
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
-                        fontWeight: 500,
-                        minWidth: 100,
                       }}
                     >
                       Aggiungi
                     </button>
                     <button
+                    className='description-button'
                       type="button"
                       onClick={() => setShowDescriptionModal(true)}
                       title="Leggi la descrizione dell'esercizio"
-                      style={{
-                        width: 30,
-                        height: 50,
-                        borderRadius: '50%',
-                        border: '2px solid #3437ed',
-                        background: '#3437ed',
-                        color: 'white',
-                        cursor: 'pointer',
-                        fontSize: 20,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
                     >
                       ⓘ
                     </button>
