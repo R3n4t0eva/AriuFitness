@@ -12,6 +12,7 @@ function Login() {
     });
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -31,6 +32,7 @@ function Login() {
         setError(error.message);
         return;
       }
+      
 
       // 2. Supabase gestisce già il token per te
       const session = data.session;
@@ -41,6 +43,10 @@ function Login() {
       window.location.reload();
     };
 
+      const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+      };
+
     return (
         <div className="form-page-container">
           <div className="glass-card form-card">
@@ -50,7 +56,16 @@ function Login() {
             <p className="form-subtitle">Accedi per continuare il tuo viaggio</p>
             <form onSubmit={handleSubmit}>
               <input type="email" name="username" placeholder="Email" onChange={handleChange} required />
-              <input type="password" name="password" placeholder="Password" onChange={handleChange} required />
+              <div className="password-container">
+                <input type={showPassword ? 'text' : 'password'} name="password" placeholder="Password" onChange={handleChange} required />
+                <button 
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="show-password-button"
+                >
+                  {showPassword ? "Nascondi" : "Mostra"}
+                </button>
+              </div>
               <button type="submit" className="form-button">Accedi</button>
             </form>
             {error && <p className="error-message">{error}</p>}

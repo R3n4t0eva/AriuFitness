@@ -51,8 +51,7 @@ button {
   transition: all 0.25s;
 }
 button:hover {
-  background-color: #d57a18;
-  transform: translateY(-2px);
+  background-color: #d4c4b0;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 button:focus,

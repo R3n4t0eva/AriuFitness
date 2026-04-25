@@ -77,6 +77,34 @@
     transform: translateY(-3px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
 }
+
+/* Il contenitore deve avere la stessa larghezza degli altri input */
+.password-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* L'input deve occupare tutto lo spazio del contenitore */
+.password-container .form-input {
+  width: 100%;
+  padding-right: 60px; /* Lascia spazio a destra per non coprire il testo con la password */
+  box-sizing: border-box;
+}
+
+/* Il tasto "Mostra" viene ancorato dentro l'input */
+.show-password-button {
+  position: absolute;
+  right: 8px; /* Distanza dal bordo destro dell'input */
+  top: 40%;
+  transform: translateY(-50%); /* Lo centra perfettamente in verticale */
+  cursor: pointer;
+  padding: 4px 10px; 
+  font-size: 12px;
+  font-weight: bold;
+  user-select: none; /* Impedisce di selezionare il testo per sbaglio cliccando */
+}
   
 .switch-form-text {
     margin-top: 25px;

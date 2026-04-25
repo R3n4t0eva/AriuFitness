@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../SupabaseClient';
 import './Form.css'; // riuso stile esistente (form-page-container, form-card, form-button, ...)
 
 function getInitials(user) {
@@ -72,36 +73,101 @@ function Row({ label, value }) {
 export default function Profilo() {
   const navigate = useNavigate();
   const token = useMemo(() => localStorage.getItem('token'), []);
-  const user = useMemo(() => {
+  const userEmail = useMemo(() => {
     const cached = localStorage.getItem('user');
-    return cached ? JSON.parse(cached) : null;
+    return cached ? JSON.parse(cached)?.email : null;
   }, []);
 
-  const initialNome = user?.nome || user?.first_name || user?.name || '';
-  const initialCognome = user?.cognome || user?.last_name || '';
-  const initialDobIso = toIsoDate(user?.data_nascita || user?.birthdate || '');
+  // Stati per i dati da Supabase
+  const [userProfileData, setUserProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
+  // Stati per editing
   const [isEditing, setIsEditing] = useState(false);
-  const [editNome, setEditNome] = useState(initialNome);
-  const [editCognome, setEditCognome] = useState(initialCognome);
-  const [editDobIso, setEditDobIso] = useState(initialDobIso);
+  const [editNome, setEditNome] = useState('');
+  const [editCognome, setEditCognome] = useState('');
+  const [editDobIso, setEditDobIso] = useState('');
   const [editError, setEditError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Carica i dati del profilo da Supabase
+  useEffect(() => {
+    const loadProfileData = async () => {
+      if (!userEmail) {
+        setLoadError('Email non trovata');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('profili')
+          .select('email, nome, cognome, data_nascita')
+          .eq('email', userEmail)
+          .single();
+
+        if (error) throw error;
+
+        setUserProfileData(data);
+        // Inizializza i campi di editing
+        setEditNome(data?.nome || '');
+        setEditCognome(data?.cognome || '');
+        setEditDobIso(toIsoDate(data?.data_nascita || ''));
+        setLoadError(null);
+      } catch (err) {
+        console.error('Errore nel caricamento del profilo:', err);
+        setLoadError('Errore nel caricamento del profilo');
+        setUserProfileData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfileData();
+  }, [userEmail]);
 
   if (!token) {
     navigate('/login');
     return null;
   }
 
-  const nome = initialNome;
-  const cognome = initialCognome;
-  const dataNascita = safeDate(user?.data_nascita || user?.birthdate || '');
-  const email = user?.email || '';
+  if (loading) {
+    return (
+      <div className="form-page-container profile-center">
+        <div className="form-card profile-card">
+          <p style={{ textAlign: 'center' }}>Caricamento profilo...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError || !userProfileData) {
+    return (
+      <div className="form-page-container profile-center">
+        <div className="form-card profile-card">
+          <p style={{ textAlign: 'center', color: '#ed3434' }}>{loadError || 'Profilo non trovato'}</p>
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            <button className="form-button" onClick={() => navigate('/')} type="button">
+              Torna alla Home
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const nome = userProfileData?.nome || '';
+  const cognome = userProfileData?.cognome || '';
+  const dataNascita = safeDate(userProfileData?.data_nascita || '');
+  const email = userProfileData?.email || '';
 
   const handleStartEdit = () => {
     setEditError('');
-    setEditNome(initialNome);
-    setEditCognome(initialCognome);
-    setEditDobIso(initialDobIso);
+    setEditNome(userProfileData?.nome || '');
+    setEditCognome(userProfileData?.cognome || '');
+    setEditDobIso(toIsoDate(userProfileData?.data_nascita || ''));
     setIsEditing(true);
   };
 
@@ -110,7 +176,7 @@ export default function Profilo() {
     setIsEditing(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const nomeTrim = (editNome || '').trim();
     const cognomeTrim = (editCognome || '').trim();
     const dobIso = (editDobIso || '').trim();
@@ -120,21 +186,37 @@ export default function Profilo() {
     if (!dobIso) return setEditError('Inserisci la data di nascita.');
     if (!isAdultIsoDate(dobIso)) return setEditError('Devi essere maggiorenne (almeno 18 anni).');
 
-    (async () => {
-      try {
-        const r = await axios.put(
-          'http://127.0.0.1:8000/users/me',
-          { nome: nomeTrim, cognome: cognomeTrim, data_nascita: dobIso },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        localStorage.setItem('user', JSON.stringify(r.data));
-        setIsEditing(false);
-        window.location.reload();
-      } catch (err) {
-        const msg = err?.response?.data?.detail || 'Salvataggio fallito.';
-        setEditError(String(msg));
-      }
-    })();
+    try {
+      setIsSaving(true);
+      setEditError('');
+
+      // Aggiorna Supabase
+      const { error } = await supabase
+        .from('profili')
+        .update({
+          nome: nomeTrim,
+          cognome: cognomeTrim,
+          data_nascita: dobIso,
+        })
+        .eq('email', email);
+
+      if (error) throw error;
+
+      // Aggiorna lo state locale
+      setUserProfileData({
+        ...userProfileData,
+        nome: nomeTrim,
+        cognome: cognomeTrim,
+        data_nascita: dobIso,
+      });
+
+      setIsEditing(false);
+    } catch (err) {
+      console.error('Errore nel salvataggio:', err);
+      setEditError(err?.message || 'Salvataggio fallito.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -145,9 +227,9 @@ export default function Profilo() {
         <p className="form-subtitle">Dati del tuo account</p>
   
         <div className="profile-avatar">
-          {user?.avatar_url
-            ? <img src={user.avatar_url} alt="avatar" />
-            : <span>{getInitials(user)}</span>}
+          {userProfileData?.avatar_url
+            ? <img src={userProfileData.avatar_url} alt="avatar" />
+            : <span>{getInitials(userProfileData)}</span>}
         </div>
   
         {/* Riquadro interno con lo stesso stile tipografico e colore della glass card */}
@@ -214,11 +296,11 @@ export default function Profilo() {
           <div className="profile-actions">
             {isEditing ? (
               <>
-                <button className="form-button form-button--secondary" onClick={handleCancelEdit} type="button">
+                <button className="form-button form-button--secondary" onClick={handleCancelEdit} type="button" disabled={isSaving}>
                   Annulla
                 </button>
-                <button className="form-button" onClick={handleSave} type="button">
-                  Salva
+                <button className="form-button" onClick={handleSave} type="button" disabled={isSaving}>
+                  {isSaving ? 'Salvataggio...' : 'Salva'}
                 </button>
               </>
             ) : (
