@@ -68,6 +68,7 @@ function ClassificationPage() {
     const fromNav = location?.state?.selectedExercises;
     if (Array.isArray(fromNav) && fromNav.length > 0) {
       setSelectedExercises(fromNav);
+      console.log("Esercizi ricevuti da navigazione:", fromNav);
       setCurrentExerciseIndex(0);
       setSelectedExercise(null);
       return;
@@ -129,70 +130,19 @@ function ClassificationPage() {
   const recordExerciseCompletion = (userFeedback) => {
     if (currentExerciseIndex >= selectedExercises.length) return;
     
-    const currentExerciseName = selectedExercises[currentExerciseIndex];
+    const currentExercise = selectedExercises[currentExerciseIndex];
     const timeTaken = exerciseStartTime ? (Date.now() - exerciseStartTime) / 1000 : 0;
     const avgTime = reps > 0 ? timeTaken / reps : 0;
     
-    // Stima dell'accuratezza (in una app reale, verrebbe dal backend)
-    // Per ora usiamo un valore fisso calcolato dal feedback
-    let accuracy = 0.5;
-    if (userFeedback === 'facile') accuracy = 0.8;
-    if (userFeedback === 'medio') accuracy = 0.6;
-    if (userFeedback === 'difficile') accuracy = 0.4;
-    
+    // Usa l'intero oggetto esercizio più i dati di performance
     const exerciseData = {
-      esercizio: currentExerciseName,
-      reps: reps,
-      accuratezza: accuracy,
-      tempo_medio: avgTime
+      ...currentExercise,
     };
     
     setCompletedExercises([...completedExercises, exerciseData]);
-    console.log(`Esercizio registrato: ${JSON.stringify(exerciseData)}`);
+    console.log(`Esercizio registrato:`, exerciseData);
   };
 
-  // --- FUNZIONE PER SALVARE LA SESSIONE AL BACKEND ---
-  const saveWorkoutSession = async (difficolta, commento) => {
-    if (completedExercises.length === 0) {
-      console.warn("Nessun esercizio da salvare");
-      return false;
-    }
-    
-    try {
-      setIsSaving(true);
-      const token = localStorage.getItem('token');
-      
-      const sessionData = {
-        esercizi: completedExercises,
-        difficolta: difficolta,
-        commento: commento
-      };
-      
-      const response = await fetch('http://127.0.0.1:8000/workouts/session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(sessionData)
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("Errore nel salvataggio della sessione:", error);
-        return false;
-      }
-      
-      const result = await response.json();
-      console.log("Sessione salvata con successo:", result);
-      return true;
-    } catch (error) {
-      console.error("Errore durante il salvataggio della sessione:", error);
-      return false;
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleContinueAfterDifficultYes = () => {
     setIsContinueAfterDifficultModalVisible(false);
@@ -217,48 +167,12 @@ function ClassificationPage() {
     // Chiudi il pop-up
     setIsWorkoutFeedbackModalVisible(false);
     
-    // Salva la sessione al database tramite il backend
-    const saved = await saveWorkoutSession(finalFeedback, workoutComment);
-    
-    if (saved) {
-      console.log("Sessione salvata con successo!");
-    } else {
-      console.warn("Errore nel salvataggio della sessione, ma continuo comunque");
-    }
-    
     // Spegni la webcam e altre pulizie se necessario
     stopWebcam();
     
     // Reindirizza l'utente alla pagina principale
     navigate('/');
   };
-  
-  // --- HOOK PER LA CONNESSIONE WEBSOCKET ---
-  useEffect(() => {
-    ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/classify/${clientId.current}`);
-    ws.current.onopen = () => {
-      console.log("WebSocket connected!");
-      setIsConnected(true);
-    };
-    ws.current.onclose = () => {
-      console.log("WebSocket disconnected!");
-      setIsConnected(false);
-    };
-    ws.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (isCountingActiveRef.current) {
-        setReps(data.repetitions);
-      }
-      setPhrase(data.phrase);
-      if (data.keypoints) {
-        setKeypoints(data.keypoints);
-      }
-    };
-
-    return () => {
-      if (ws.current) ws.current.close();
-    };
-  }, []);
 
   // --- FUNZIONI DI CONTROLLO WEBCAM ---
   const startWebcam = async () => {
@@ -312,75 +226,8 @@ function ClassificationPage() {
     const msg = 'Attenzione! Non riusciamo a rilevare la videocamera!';
     setWebcamWarningMessage(msg);
     setPhrase(msg);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWebcamActive]);
   
-   // --- 2. HOOK PER L'INVIO DEI FRAME (UNICO E CORRETTO) ---
-   useEffect(() => {
-    // Non fare nulla se la webcam non è attiva o il websocket non è connesso
-    if (!isWebcamActive || !isConnected) return;
-
-    const sendFrame = () => {
-      if (ws.current?.readyState === WebSocket.OPEN) {
-        const canvas = canvasRef.current;
-        const video = videoRef.current;
-        if (canvas && video && video.videoWidth > 0) {
-          const context = canvas.getContext('2d');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-          const data = canvas.toDataURL('image/jpeg', 0.8);
-          console.log("Sto inviando un frame al backend...");
-          ws.current.send(data);
-        }
-      }
-    };
-
-    const intervalId = setInterval(sendFrame, 100);
-    return () => clearInterval(intervalId);
-  }, [isWebcamActive, isConnected]); // Si attiva solo se webcam e connessione sono attive
-
-  // --- HOOK PER DISEGNARE I KEYPOINT ---
-  useEffect(() => {
-    const video = videoRef.current;
-    const canvas = overlayCanvasRef.current;
-    
-    if (!video || !canvas || keypoints.length === 0 || video.videoWidth === 0) {
-      return;
-    }
-
-    const { videoWidth, videoHeight, clientWidth, clientHeight } = video;
-
-    canvas.width = clientWidth;
-    canvas.height = clientHeight;
-
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const scale = Math.min(clientWidth / videoWidth, clientHeight / videoHeight);
-    const renderedWidth = videoWidth * scale;
-    const renderedHeight = videoHeight * scale;
-    const offsetX = (clientWidth - renderedWidth) / 2;
-    const offsetY = (clientHeight - renderedHeight) / 2;
-
-    ctx.fillStyle = '#2a9d8f';
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
-
-    keypoints.forEach(point => {
-      if (point.x > 0 && point.y > 0) {
-        // --- NESSUNA LOGICA DI SPECCHIO QUI ---
-        // Calcoliamo semplicemente la posizione diretta
-        const finalX = (point.x * renderedWidth) + offsetX;
-        const finalY = (point.y * renderedHeight) + offsetY;
-        
-        ctx.beginPath();
-        ctx.arc(finalX, finalY, 5, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.stroke();
-      }
-    });
-  }, [keypoints]);
 
   useEffect(() => {
     // Se il countdown non è attivo, non fare nulla
@@ -391,14 +238,7 @@ function ClassificationPage() {
       setCountdown(null); // Nasconde il countdown
       setIsCountingActive(true); // Attiva il conteggio delle ripetizioni
       setExerciseStartTime(Date.now()); // Registra l'inizio dell'esercizio
-      
-      // Invia il comando al backend per iniziare a contare
-      if (ws.current?.readyState === WebSocket.OPEN && selectedExercise) {
-        ws.current.send(JSON.stringify({
-          type: 'start_exercise',
-          exercise_name: selectedExercise
-        }));
-      }
+
       return;
     }
   
@@ -425,8 +265,8 @@ function ClassificationPage() {
     }
 
     setCurrentExerciseIndex(nextIndex);
-    const nextExerciseName = selectedExercises[nextIndex];
-    handleExerciseSelect(nextExerciseName);
+    const nextExercise = selectedExercises[nextIndex];
+    handleExerciseSelect(nextExercise);
     setPhrase('Pronto per il prossimo esercizio. Premi Inizia quando vuoi partire.');
   };
 
@@ -477,12 +317,14 @@ function ClassificationPage() {
     setReps((prev) => prev + delta);
   };
 
-  const handleExerciseSelect = (exerciseName) => {
-    const exercise = selectedExercises.find(ex => ex === exerciseName);
-    if (exercise) {
+  const handleExerciseSelect = (exercise) => {
+    // exercise è ora l'oggetto completo dell'esercizio
+    if (exercise && exercise.id && exercise.nome) {
       setSelectedExercise(exercise);
-      // TODO: Qui puoi impostare il tutorial video se hai i dati
-      // setSelectedTutorial(tutorialUrl);
+      // Carica il video tutorial dall'oggetto esercizio
+      if (exercise.video_tut_url) {
+        setSelectedTutorial(exercise.video_tut_url);
+      }
       resetExerciseRuntimeState();
     }
   };
@@ -533,7 +375,7 @@ function ClassificationPage() {
                 whiteSpace: 'nowrap'
               }}>
                 <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#1a1a1a', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  {selectedExercise}
+                  {selectedExercise.nome}
                 </div>
                 <div style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.8, color: '#333' }}>
                   Target: {currentTargetReps} ripetizioni
@@ -664,12 +506,12 @@ function ClassificationPage() {
         <ul className="exercise-list">
           {selectedExercises.map((item, index) => (
             <button
-              key={index}
-              className={selectedExercise === item ? 'exercise-item active-exercise' : 'exercise-item'}
+              key={item.id}
+              className={selectedExercise?.id === item.id ? 'exercise-item active-exercise' : 'exercise-item'}
               onClick={() => handleExerciseSelect(item)}
               disabled={index !== currentExerciseIndex || countdown !== null || isCountingActive}
             >
-              {item}
+              {item.nome}
             </button>
           ))}
         </ul>

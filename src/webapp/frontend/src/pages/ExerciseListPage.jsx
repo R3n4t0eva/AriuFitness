@@ -75,18 +75,20 @@ function ExerciseListPage() {
     }
   };
 
-  const handleAddExercise = (exerciseName) => {
+  const handleAddExercise = () => {
+    if (!selectedExerciseDetails) return;
     setAddedExercises((prev) => {
-      if (prev.includes(exerciseName)) return prev;
-      const next = [...prev, exerciseName];
+      // Controlla se l'esercizio è già stato aggiunto (tramite ID)
+      if (prev.some((ex) => ex.id === selectedExerciseDetails.id)) return prev;
+      const next = [...prev, selectedExerciseDetails];
       persistSelectedExercises(next);
       return next;
     });
   };
 
-  const handleRemoveExercise = (exerciseName) => {
+  const handleRemoveExercise = (exerciseId) => {
     setAddedExercises((prev) => {
-      const next = prev.filter((x) => x !== exerciseName);
+      const next = prev.filter((ex) => ex.id !== exerciseId);
       persistSelectedExercises(next);
       return next;
     });
@@ -146,7 +148,7 @@ function ExerciseListPage() {
                   >
                     <button
                       className={
-                        selectedExercise === exercise.nome
+                        selectedExercise === exercise
                           ? 'exercise-item active-exercise'
                           : 'exercise-item'
                       }
@@ -167,9 +169,9 @@ function ExerciseListPage() {
                 </p>
               ) : (
                 <ul style={{ paddingLeft: 18, margin: 0 }}>
-                  {addedExercises.map((name) => (
+                  {addedExercises.map((exercise) => (
                     <li
-                      key={name}
+                      key={exercise.id}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -180,11 +182,11 @@ function ExerciseListPage() {
                         borderBottom: '1px solid #8b5a3c',
                       }}
                     >
-                      <span>{name}</span>
+                      <span>{exercise.nome}</span>
                       <button
                         type="button"
-                        onClick={() => handleRemoveExercise(name)}
-                        aria-label={`Rimuovi ${name}`}
+                        onClick={() => handleRemoveExercise(exercise.id)}
+                        aria-label={`Rimuovi ${exercise.nome}`}
                         title="Rimuovi"
                         style={{
                           width: 28,
@@ -261,8 +263,8 @@ function ExerciseListPage() {
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       type="button"
-                      onClick={() => handleAddExercise(selectedExercise)}
-                      disabled={!selectedExercise || addedExercises.includes(selectedExercise)}
+                      onClick={() => handleAddExercise()}
+                      disabled={!selectedExercise || addedExercises.some((ex) => ex.id === selectedExerciseDetails?.id)}
                       style={{
                         padding: '10px 14px',
                         borderRadius: 12,
@@ -270,11 +272,11 @@ function ExerciseListPage() {
                         background: '#8b5a3c',
                         color: 'white',
                         cursor:
-                          !selectedExercise || addedExercises.includes(selectedExercise)
+                          !selectedExercise || addedExercises.some((ex) => ex.id === selectedExerciseDetails?.id)
                             ? 'not-allowed'
                             : 'pointer',
                         opacity:
-                          !selectedExercise || addedExercises.includes(selectedExercise) ? 0.6 : 1,
+                          !selectedExercise || addedExercises.some((ex) => ex.id === selectedExerciseDetails?.id) ? 0.6 : 1,
                         boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
                         fontWeight: 500,
                         minWidth: 100,
