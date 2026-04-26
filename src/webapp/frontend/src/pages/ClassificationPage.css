@@ -1,0 +1,47 @@
+.video-container {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+}
+
+.exercise-info-overlay{
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    padding: 8px 20px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    width: fit-content;
+    white-space: nowrap;
+}
+
+.exercise-name{font-weight: 800; font-size: 1.1rem; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.5px; }
+.exercise-target{font-size: 0.85rem; font-weight: 600; opacity: 0.8; color: #333; }
+
+.video-controls { padding: 12px; display: flex; flex-direction: column; gap: 10; border-top: 1px solid rgba(0,0,0,0.1); }
+
+.completed-message { font-weight: 900; color: #2a9d8f; text-align: center; }
+.webcam-warning { font-weight: 800; color: #e76f51; text-align: center; }
+
+.info-card-title { display: flex; align-items: baseline; gap: 10px; }
+.info-card-title h3 { margin: 0; }
+.info-card-title span { opacity: 0.85; font-weight: 700; font-size: 12px; }
+
+.reps-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
+
+#workout-list-panel p{margin-top: 8px; opacity: 0.85;}
+
+.completed-message { margin-top: 10px; font-weight: 800; color: #2a9d8f; }
+
+.continue-buttons { display: flex; gap: 12px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }

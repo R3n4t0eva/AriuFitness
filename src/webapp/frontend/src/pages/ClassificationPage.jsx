@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import '../Dashboard.css';
+import './ClassificationPage.css';
 
 const DEFAULT_TARGET_REPS = 10;
 
@@ -10,7 +11,6 @@ function ClassificationPage() {
   const [phrase, setPhrase] = useState('Seleziona un esercizio e attiva la webcam per iniziare.');
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [selectedExercises, setSelectedExercises] = useState([]);
-  const [keypoints, setKeypoints] = useState([]);
   const [isWebcamActive, setIsWebcamActive] = useState(false);
   const [stream, setStream] = useState(null);
   const [selectedTutorial, setSelectedTutorial] = useState(null);
@@ -26,28 +26,22 @@ function ClassificationPage() {
   const [isContinueAfterDifficultModalVisible, setIsContinueAfterDifficultModalVisible] = useState(false);
   const [pendingAdvanceAfterDifficult, setPendingAdvanceAfterDifficult] = useState(false);
   
-  // 1. STATO MANCANTE AGGIUNTO
-  const [isConnected, setIsConnected] = useState(false);
-  
-  // 2. STATO PER TRACCIARE GLI ESERCIZI COMPLETATI
   const [completedExercises, setCompletedExercises] = useState([]);
   const [exerciseStartTime, setExerciseStartTime] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const overlayCanvasRef = useRef(null);
+
   const tutorialVideoRef = useRef(null);
-  const ws = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const clientId = useRef(Date.now().toString());
   const isCountingActiveRef = useRef(false);
 
   useEffect(() => {
     isCountingActiveRef.current = isCountingActive;
   }, [isCountingActive]);
 
+  /*funzione per mettere in pausa il video tutorial*/
   const pauseTutorialVideo = () => {
     if (!tutorialVideoRef.current) return;
     try {
@@ -57,6 +51,7 @@ function ClassificationPage() {
     }
   };
 
+  /*reset dello stato legato all'esercizio in corso, usato quando si avanza al prossimo esercizio o quando si interrompe l'esercizio corrente*/
   const resetExerciseRuntimeState = () => {
     setCountdown(null);
     setIsCountingActive(false);
@@ -64,11 +59,11 @@ function ClassificationPage() {
     setIsCompletedVisible(false);
   };
 
+  /*effetto per caricare gli esercizi selezionati dalla navigazione o da localStorage al montaggio del componente o quando cambia location.state*/
   useEffect(() => {
     const fromNav = location?.state?.selectedExercises;
     if (Array.isArray(fromNav) && fromNav.length > 0) {
       setSelectedExercises(fromNav);
-      console.log("Esercizi ricevuti da navigazione:", fromNav);
       setCurrentExerciseIndex(0);
       setSelectedExercise(null);
       return;
@@ -88,6 +83,7 @@ function ClassificationPage() {
     }
   }, [location?.state]);
 
+  /*funzione per avanzare al prossimo esercizio dopo il feedback, usata sia quando l'utente dà un feedback normale (facil/medio/difficile) sia quando conferma di voler continuare dopo aver dato un feedback difficile*/
   const advanceAfterExerciseFeedback = () => {
     const nextIndex = currentExerciseIndex + 1;
 
@@ -95,7 +91,6 @@ function ClassificationPage() {
       setCurrentExerciseIndex(nextIndex);
       setSelectedExercise(null);
       setReps(0);
-      setKeypoints([]);
       setPhrase("Seleziona il prossimo esercizio per continuare.");
       resetExerciseRuntimeState();
       return;
@@ -109,11 +104,12 @@ function ClassificationPage() {
     setPhrase('Hai Finito!');
   };
 
+  /*funzione chiamata quando l'utente fornisce un feedback dopo aver completato un esercizio, 
+  se il feedback è "difficile" mostra un pop-up di conferma per evitare che l'utente dia per 
+  errore un feedback negativo e interrompa la sessione, se invece è "medio" o "facile" avanza 
+  direttamente al prossimo esercizio*/
   const handleFeedbackSubmit = (feedback) => {
     console.log(`Feedback esercizio: ${feedback}`);
-    
-    // Registra i dati dell'esercizio completato
-    recordExerciseCompletion(feedback);
     
     setIsFeedbackModalVisible(false);
 
@@ -126,24 +122,9 @@ function ClassificationPage() {
     advanceAfterExerciseFeedback();
   };
 
-  // --- FUNZIONE PER REGISTRARE IL COMPLETAMENTO DI UN ESERCIZIO ---
-  const recordExerciseCompletion = (userFeedback) => {
-    if (currentExerciseIndex >= selectedExercises.length) return;
-    
-    const currentExercise = selectedExercises[currentExerciseIndex];
-    const timeTaken = exerciseStartTime ? (Date.now() - exerciseStartTime) / 1000 : 0;
-    const avgTime = reps > 0 ? timeTaken / reps : 0;
-    
-    // Usa l'intero oggetto esercizio più i dati di performance
-    const exerciseData = {
-      ...currentExercise,
-    };
-    
-    setCompletedExercises([...completedExercises, exerciseData]);
-    console.log(`Esercizio registrato:`, exerciseData);
-  };
-
-
+  /*funzione chiamata quando l'utente conferma di voler continuare dopo aver dato un feedback difficile, 
+  chiude il pop-up e avanza al prossimo esercizio, se invece l'utente decide di non continuare chiude il 
+  pop-up, ferma la webcam e reindirizza alla home*/
   const handleContinueAfterDifficultYes = () => {
     setIsContinueAfterDifficultModalVisible(false);
     if (pendingAdvanceAfterDifficult) {
@@ -152,6 +133,8 @@ function ClassificationPage() {
     }
   };
 
+  /*funzione chiamata quando l'utente decide di non continuare dopo aver dato un feedback difficile,
+  chiude il pop-up, ferma la webcam e reindirizza alla home*/
   const handleContinueAfterDifficultNo = () => {
     setIsContinueAfterDifficultModalVisible(false);
     setPendingAdvanceAfterDifficult(false);
@@ -159,6 +142,8 @@ function ClassificationPage() {
     navigate('/');
   };
 
+  /*funzione chiamata quando l'utente decide di terminare l'allenamento, 
+  chiude il pop-up, ferma la webcam e reindirizza alla home*/
   const handleFinishWorkout = async (feedback) => {
     // Se il feedback è un commento e non una faccina, usa il testo del commento
     const finalFeedback = feedback === 'comment' ? workoutComment : feedback;
@@ -176,13 +161,10 @@ function ClassificationPage() {
 
   // --- FUNZIONI DI CONTROLLO WEBCAM ---
   const startWebcam = async () => {
-    console.log("Tento di avviare la webcam. videoRef.current è:", videoRef.current);
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setStream(stream);
       if (videoRef.current) {
-        console.log("videoRef trovato, imposto lo srcObject...");
         videoRef.current.srcObject = stream;
       } else {
         console.error("ERRORE: videoRef.current è nullo! Impossibile mostrare il video.");
@@ -200,7 +182,6 @@ function ClassificationPage() {
     }
     setIsWebcamActive(false);
     setStream(null);
-    setKeypoints([]);
   };
 
   const handleWebcamToggle = () => {
@@ -273,6 +254,8 @@ function ClassificationPage() {
   const currentTargetReps = DEFAULT_TARGET_REPS;
   const remainingReps = Math.max(currentTargetReps - reps, 0);
 
+  /*effetto che si attiva quando le ripetizioni raggiungono o superano il target, 
+  mostra il messaggio di completamento e dopo 1 secondo avanza al prossimo esercizio*/
   useEffect(() => {
     if (!isCountingActive) return;
     if (!selectedExercise) return;
@@ -296,29 +279,17 @@ function ClassificationPage() {
     }, 1000);
 
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reps, isCountingActive, selectedExercise]);
 
-  // In ClassificationPage.jsx
-
-  const handleResetReps = () => {
-    console.log("Azzero le ripetizioni...");
-    setReps(0); // Azzera subito le ripetizioni nell'interfaccia
-    
-    // Invia il comando al backend
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({
-        type: 'reset_reps'
-      }));
-    }
-  };
+  
 
   const handleManualAddReps = (delta) => {
     setReps((prev) => prev + delta);
   };
 
+  /*funzione chiamata quando si seleziona un esercizio dalla lista, 
+  imposta l'esercizio selezionato e carica il video tutorial corrispondente se presente*/
   const handleExerciseSelect = (exercise) => {
-    // exercise è ora l'oggetto completo dell'esercizio
     if (exercise && exercise.id && exercise.nome) {
       setSelectedExercise(exercise);
       // Carica il video tutorial dall'oggetto esercizio
@@ -338,46 +309,22 @@ function ClassificationPage() {
   };
 
   // --- JSX RENDER ---
-  // In ClassificationPage.jsx
 
   return (
     <div className="dashboard-container">
       {/* Sezione superiore fissa */}
       <div className="main-view-grid">
         {/* Pannello Webcam */}
-        <div className="video-panel glass-card" style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            justifyContent: 'flex-start',
-            position: 'relative',
-            minHeight: '300px',
-          }}>
-
+        <div className="video-panel glass-card" style={{ flexDirection: 'column' }}>
           {/* Contenitore della webcam (parte grande) */}
-          <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', borderRadius: '12px 12px 0 0' }}>
-  
+          <div className="video-container" >
             {/* Overlay info Esercizio: Sopra al centro */}
             {selectedExercise && (
-              <div style={{
-                position: 'absolute',
-                top: '15px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                zIndex: 10,
-                textAlign: 'center',
-                background: 'rgba(255, 255, 255, 0.2)',
-                backdropFilter: 'blur(8px)',
-                padding: '8px 20px',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                width: 'fit-content',
-                whiteSpace: 'nowrap'
-              }}>
-                <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#1a1a1a', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <div className="exercise-info-overlay">
+                <div className="exercise-name">
                   {selectedExercise.nome}
                 </div>
-                <div style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.8, color: '#333' }}>
+                <div className="exercise-target">
                   Target: {currentTargetReps} ripetizioni
                 </div>
               </div>
@@ -386,8 +333,6 @@ function ClassificationPage() {
             {/* Video della webcam */}
             <div className={`video-container ${!isWebcamActive ? 'hidden' : ''}`}>
               <video ref={videoRef} autoPlay playsInline muted className="webcam-feed" />
-              <canvas ref={overlayCanvasRef} className="overlay-canvas" />
-              <canvas ref={canvasRef} style={{ display: 'none' }} />
             </div>
 
             {/* Placeholder quando webcam è spenta */}
@@ -399,7 +344,7 @@ function ClassificationPage() {
           </div>
 
           {/* Contenitore pulsanti (parte piccola) */}
-          <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+          <div className="video-controls">
             {/* Riga 1: Pulsante Attiva/Disattiva Webcam */}
             {isWebcamActive && (
               <button onClick={handleWebcamToggle} className="webcam-toggle-button inside-video">Disattiva Webcam</button>
@@ -425,12 +370,12 @@ function ClassificationPage() {
             ) : null}
 
             {isCompletedVisible && (
-              <div style={{ fontWeight: 900, color: '#2a9d8f', textAlign: 'center' }}>
+              <div className="completed-message" >
                 Complimenti!
               </div>
             )}
             {!isWebcamActive && webcamWarningMessage && (
-              <div style={{ fontWeight: 800, color: '#e76f51', textAlign: 'center' }}>
+              <div className="webcam-warning" >
                 {webcamWarningMessage}
               </div>
             )}
@@ -455,18 +400,18 @@ function ClassificationPage() {
         {/* Pannello Ripetizioni */}
         <div id="reps-panel" className="info-card glass-card">
           <div className="info-card-header">
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-              <h3 style={{ margin: 0 }}>RIPETIZIONI</h3>
+            <div className= "info-card-title">
+              <h3>RIPETIZIONI</h3>
               {selectedExercise && (isStartLocked || countdown !== null || isCountingActive) ? (
-                <span style={{ opacity: 0.85, fontWeight: 700, fontSize: 12 }}>
+                <span>
                   Ancora {remainingReps}
                 </span>
               ) : null}
             </div>
-            <button onClick={handleResetReps} className="reset-button">Azzera</button>
+           
           </div>
           <p className="big-text">{reps}</p>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 8, flexWrap: 'wrap' }}>
+          <div className='reps-buttons' >
             <button
               type="button"
               onClick={() => handleManualAddReps(1)}
@@ -499,7 +444,7 @@ function ClassificationPage() {
       <div id="workout-list-panel" className="info-card glass-card workout-list-card">
         <h3>ESERCIZI SELEZIONATI</h3>
         {selectedExercises.length === 0 ? (
-          <p style={{ marginTop: 8, opacity: 0.85 }}>
+          <p>
             Non hai selezionato esercizi. Vai in <Link to="/visualizza-esercizi">Galleria Esercizi</Link> e aggiungili.
           </p>
         ) : null}
@@ -516,12 +461,12 @@ function ClassificationPage() {
           ))}
         </ul>
         {isCompletedVisible && (
-          <div style={{ marginTop: 10, fontWeight: 800, color: '#2a9d8f' }}>
+          <div className="completed-message">
             Completato!
           </div>
         )}
         {selectedExercises.length > 0 && currentExerciseIndex >= selectedExercises.length && (
-          <div style={{ marginTop: 10, fontWeight: 800 }}>
+          <div className="completed-message">
             Hai Finito!
           </div>
         )}
@@ -572,7 +517,7 @@ function ClassificationPage() {
         <div className="modal-overlay">
           <div className="glass-card modal-content">
             <h3>Sei sicuro di riuscire a continuare?</h3>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 14, flexWrap: 'wrap' }}>
+            <div className="continue-buttons">
               <button className="form-button" onClick={handleContinueAfterDifficultYes}>
                 Si, posso continuare
               </button>

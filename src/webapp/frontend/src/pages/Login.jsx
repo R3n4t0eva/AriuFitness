@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom'; // <-- Assicurati che Link sia qui
 import './Form.css';
-import { createClient } from '@supabase/supabase-js';
 
 import { supabase } from '../SupabaseClient'; // Importa il client Supabase
 function Login() {

@@ -24,11 +24,7 @@ const GlobalHeader = () => {
     return () => document.removeEventListener('click', onClick);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
+  
 
   const initials = (u) => {
     const name = (u?.nome || u?.first_name || u?.name || '').trim();
@@ -90,7 +86,7 @@ const GlobalHeader = () => {
             </div>
           ) : (
             // se non loggato, mantieni solo Home (o potresti aggiungere link Login/Register)
-            <button onClick={handleLogout} className="logout-button">Logout</button>
+            <button onClick={logout} className="logout-button">Logout</button>
           )}
         </div>
       )}

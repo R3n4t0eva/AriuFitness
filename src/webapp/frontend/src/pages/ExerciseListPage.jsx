@@ -9,7 +9,6 @@ function ExerciseListPage() {
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [videoUrl, setVideoUrl] = useState('');
   const navigate = useNavigate();
-  const [selectedVideo, setSelectedVideo] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Tutti');
   const [addedExercises, setAddedExercises] = useState([]);
   const [exercises, setExercises] = useState([]);

@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../SupabaseClient';
 import './Form.css'; // riuso stile esistente (form-page-container, form-card, form-button, ...)
