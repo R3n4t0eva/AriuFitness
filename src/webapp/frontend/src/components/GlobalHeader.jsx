@@ -24,11 +24,7 @@ const GlobalHeader = () => {
     return () => document.removeEventListener('click', onClick);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
+  
 
   const initials = (u) => {
     const name = (u?.nome || u?.first_name || u?.name || '').trim();
@@ -47,8 +43,7 @@ const GlobalHeader = () => {
   return (
     <header className="global-header">
       <div className="brand-section">
-        <div className="app-logo">AI</div>
-        <span className="app-title-global">FITNESS AI</span>
+        <span className="app-title-global">AriuFitness</span>
       </div>
 
       {showAuthButtons && (
@@ -62,17 +57,14 @@ const GlobalHeader = () => {
                 className="avatar-btn"
                 onClick={() => setOpen(v => !v)}
               >
-                {user?.avatar_url
-                  ? <img src={user.avatar_url} alt="avatar" />
-                  : <span>{initials(user)}</span>
-                }
+                {user?.avatar_url ? <img src={user.avatar_url} alt="avatar" /> : <img src="/blank-avatar.png" alt="avatar" className='avatar-image' />}
               </button>
 
               {open && (
                 <div className="gh-menu">
                   <div className="gh-user-row">
                     <div className="gh-avatar small">
-                      {user?.avatar_url ? <img src={user.avatar_url} alt="avatar" /> : <span>{initials(user)}</span>}
+                      {user?.avatar_url ? <img src={user.avatar_url} alt="avatar" /> : <img src="/blank-avatar.png" alt="avatar" className='avatar-image' />}
                     </div>
                     <div className="gh-user-info">
                       <div className="gh-name">Utente</div>
@@ -94,7 +86,7 @@ const GlobalHeader = () => {
             </div>
           ) : (
             // se non loggato, mantieni solo Home (o potresti aggiungere link Login/Register)
-            <button onClick={handleLogout} className="logout-button">Logout</button>
+            <button onClick={logout} className="logout-button">Logout</button>
           )}
         </div>
       )}

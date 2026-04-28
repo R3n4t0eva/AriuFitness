@@ -6,73 +6,57 @@
     padding: 20px;
   }
   
-  .home-card {
-    width: 100%;
-    max-width: 800px; /* Un po' più grande per contenere i bottoni */
-    text-align: center;
-  }
-  
-  .home-card h1 {
-    font-size: 3rem;
-    font-weight: 700;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    margin-bottom: 10px;
-  }
-  
-  .home-subtitle {
-    font-size: 1.2rem;
-    font-weight: 300;
-    margin-bottom: 40px;
-  }
-  
-  .button-container {
-    display: flex;
-    justify-content: center;
-    gap: 30px; /* Spazio tra i due bottoni */
-  }
-  
-  .choice-button {
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 15px;
-    padding: 30px;
-    width: 300px;
-    text-decoration: none;
-    color: white;
+  .home-content {
     display: flex;
     flex-direction: column;
+    justify-content: center;
     align-items: center;
-    transition: transform 0.2s ease-in-out, background 0.2s ease-in-out;
+    gap: 40px;
   }
-  
-  .choice-button:hover {
-    transform: translateY(-10px);
-    background: rgba(255, 255, 255, 0.25);
+
+  .home-image {
+    max-width: 500px;
+    width: 100%;
+    height: auto;
+    border-radius: 20px;
   }
-  
-  .choice-button .button-title {
-    font-size: 1.5rem;
+
+
+
+  .start-workout-button {
+    display: inline-block;
+    padding: 18px 60px;
+    background: #8b5a3c;
+    color: #ffffff;
+    border: none;
+    border-radius: 15px;
+    font-size: 1.3rem;
     font-weight: 600;
-    margin-bottom: 15px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 15px rgba(139, 90, 60, 0.3);
   }
-  
-  .choice-button .button-description {
-    font-size: 0.9rem;
-    font-weight: 300;
-    opacity: 0.8;
-    line-height: 1.5;
+
+  .start-workout-button:hover {
+    background: #f5e6d3;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(61, 107, 32, 0.4);
+  }
+
+  .start-workout-button:active {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(61, 107, 32, 0.3);
   }
 
   
 @media (max-width: 768px) {
-    /* Impila i bottoni in verticale invece che orizzontale */
-    .button-container {
-      flex-direction: column;
-      align-items: center;
+    .home-image {
+      max-width: 100%;
     }
-  
-    .choice-button {
-      width: 100%; /* I bottoni ora occupano tutta la larghezza */
-      max-width: 400px;
+
+    .start-workout-button {
+      padding: 15px 40px;
+      font-size: 1.1rem;
     }
   }
