@@ -1,2 +1,2 @@
-# TrainerAI
-Progetto di tesi triennale in Informatica 2024
+# AriuFitness
+Progetto di tesi triennale in ITPS 2026
