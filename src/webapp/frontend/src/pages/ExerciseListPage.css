@@ -1,22 +1,21 @@
 /* Contenitore principale della pagina, che centra il pannello */
 .page-container {
-    /* Usa la griglia per centrare, è il metodo più robusto */
     display: grid;
-    place-items: center; /* Centra sia in orizzontale che in verticale */
-    min-height: calc(100vh - 80px); /* Altezza schermo MENO laltezza dell'header globale */
-    padding: 30px;
+    place-items: center;
+    min-height: calc(100vh - 80px);
+    padding: clamp(15px, 5vw, 30px);
     box-sizing: border-box;
 }
   
   /* Card di vetro principale con dimensioni fisse e stabili */
   .page-card {
     width: 90%;
-    max-width: 700px;
-    height: 80vh; /* Altezza fissa rispetto allo schermo */
-    max-height: 600px; /* Limite di altezza massima */
+    max-width: 1200px;
+    height: auto;
+    max-height: 80vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Impedisce al contenuto di "scappare" e rompere il layout */
+    overflow: hidden;
   }
   
   /* Header interno della pagina */
@@ -24,41 +23,57 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
+    margin-bottom: clamp(15px, 3vw, 20px);
+    padding-bottom: clamp(15px, 3vw, 20px);
     border-bottom: 1px solid #d4c4b0;
     flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: clamp(10px, 2vw, 15px);
   }
   
   .page-header h1 {
     margin: 0;
-    font-size: 1.8rem;
+    font-size: clamp(1.4rem, 5vw, 1.8rem);
     color: #8b5a3c;
   }
   
   /* Layout a due colonne che non si deforma */
   .content-layout {
     display: grid;
-    grid-template-columns: 1fr 2.5fr; /* Colonna lista più stretta, colonna video più larga */
-    gap: 30px;
+    grid-template-columns: 1fr 2.5fr;
+    gap: clamp(20px, 4vw, 30px);
     flex-grow: 1;
     overflow: hidden;
-    /* La riga si adatta allo spazio disponibile senza rompere il layout */
     grid-template-rows: minmax(0, 1fr);
   }
 
-  /* =================================
-     1. LAYOUT GENERALE E STRUTTURA
-     ================================= */
+  @media (max-width: 769px) {
+    .content-layout {
+      grid-template-columns: 1fr;
+      gap: clamp(15px, 3vw, 20px);
+    }
+    
+    .page-card {
+      max-height: none;
+      height: auto;
+    }
+    
+    .exercise-menu {
+      max-height: 300px;
+    }
+  }
+
   .loading {
-    padding: 20px;
+    padding: clamp(15px, 3vw, 20px);
     text-align: center;
+    font-size: clamp(0.9rem, 2vw, 1rem);
   }
 
   .error {
-    padding: 20px;
+    padding: clamp(15px, 3vw, 20px);
     text-align: center;
     color: #ed3434;
+    font-size: clamp(0.9rem, 2vw, 1rem);
   }
 
   .filter-section{
@@ -68,18 +83,20 @@
   .filter-section label {
     display: block;
     margin-bottom: 6px;
+    font-size: clamp(0.85rem, 2vw, 0.95rem);
   }
 
   .filter-section select {
     width: 100%;
-    padding: 8px;
-    border-radius: 8px; 
+    padding: clamp(6px, 1.5vw, 8px);
+    border-radius: 8px;
+    font-size: clamp(0.85rem, 1.8vw, 0.95rem);
   }
   
   /* Colonna sinistra: Lista Esercizi */
   .exercise-menu {
-    overflow-y: auto; /* Permette di scrollare solo la lista se è lunga */
-    padding-right: 15px;
+    overflow-y: auto;
+    padding-right: clamp(10px, 2vw, 15px);
   }
   
   .exercise-list { list-style-type: none; padding: 0; margin: 0; }
@@ -94,8 +111,8 @@
   .exercise-item {
     display: block;
     width: 100%;
-    padding: 15px 20px;
-    margin-bottom: 10px;
+    padding: clamp(12px, 2vw, 15px) clamp(15px, 3vw, 20px);
+    margin-bottom: clamp(8px, 1.5vw, 10px);
     border-radius: 10px;
     background: #ffffff;
     cursor: pointer;
@@ -104,6 +121,7 @@
     color: #2d2d2d;
     border: 1px solid #d4c4b0;
     font-weight: 500;
+    font-size: clamp(0.9rem, 2vw, 1rem);
   }
   .exercise-item:hover {
     background: #f5e6d3;
@@ -171,9 +189,23 @@
     align-items: center;
     background: #ffffff;
     border-radius: 15px;
-    height: 100%;
+    height: auto;
+    min-height: clamp(250px, 60vh, 600px);
     overflow: hidden;
     border: 1px solid #d4c4b0;
+    box-sizing: border-box;
+  }
+  
+  @media (max-width: 769px) {
+    .video-player-panel {
+      min-height: clamp(250px, 50vh, 400px);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .video-player-panel {
+      min-height: clamp(200px, 45vh, 350px);
+    }
   }
   
   .video-player-panel .video-container {
@@ -219,7 +251,7 @@
 
   .add-exercise-section { display: flex; gap: 8px; }
   .description-button {
-    width: 30px;
+    width: 50px;
     height: 50px;
     border-radius: 50%;
     border: 2px solid #3437ed;

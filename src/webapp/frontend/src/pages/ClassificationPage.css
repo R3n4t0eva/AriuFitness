@@ -6,8 +6,10 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    overflow: hidden;
+    overflow: auto;
     border-radius: 12px 12px 0 0;
+    min-height: clamp(250px, 50vh, 500px);
+    max-height: clamp(300px, 60vh, 600px);
 }
 
 .exercise-info-overlay{
@@ -19,29 +21,73 @@
     text-align: center;
     background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(8px);
-    padding: 8px 20px;
+    padding: clamp(6px, 1.5vw, 8px) clamp(15px, 3vw, 20px);
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.3);
     width: fit-content;
     white-space: nowrap;
+    max-width: 90vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.exercise-name{font-weight: 800; font-size: 1.1rem; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.5px; }
-.exercise-target{font-size: 0.85rem; font-weight: 600; opacity: 0.8; color: #333; }
+.exercise-name { font-weight: 800; font-size: clamp(0.9rem, 2vw, 1.1rem); color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.5px; }
+.exercise-target{ font-size: clamp(0.75rem, 1.5vw, 0.85rem); font-weight: 600; opacity: 0.8; color: #333; }
 
-.video-controls { padding: 12px; display: flex; flex-direction: column; gap: 10; border-top: 1px solid rgba(0,0,0,0.1); }
+.video-controls {  
+    align-items: center;    
+    padding: clamp(12px, 2.5vw, 16px); 
+    display: flex; 
+    flex-direction: row; 
+    gap: clamp(8px, 1.5vw, 12px); 
+    border-top: 1px solid rgba(0,0,0,0.1);
+    width: 100%;
+    box-sizing: border-box;
+}
 
-.completed-message { font-weight: 900; color: #2a9d8f; text-align: center; }
-.webcam-warning { font-weight: 800; color: #e76f51; text-align: center; }
+.completed-message { font-weight: 900; color: #2a9d8f; text-align: center; font-size: clamp(0.9rem, 2vw, 1rem); }
+.webcam-warning { font-weight: 800; color: #e76f51; text-align: center; font-size: clamp(0.9rem, 2vw, 1rem); }
 
-.info-card-title { display: flex; align-items: baseline; gap: 10px; }
-.info-card-title h3 { margin: 0; }
-.info-card-title span { opacity: 0.85; font-weight: 700; font-size: 12px; }
+.info-card-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.info-card-title h3 { margin: 0; font-size: clamp(0.9rem, 2vw, 1.1rem); }
+.info-card-title span { opacity: 0.85; font-weight: 700; font-size: clamp(0.75rem, 1.5vw, 0.9rem); }
 
-.reps-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
+.reps-buttons { display: flex; gap: clamp(8px, 1.5vw, 10px); justify-content: center; margin-top: 8px; flex-wrap: wrap; }
 
-#workout-list-panel p{margin-top: 8px; opacity: 0.85;}
+#workout-list-panel p{ margin-top: 8px; opacity: 0.85; font-size: clamp(0.85rem, 1.8vw, 0.95rem); }
 
 .completed-message { margin-top: 10px; font-weight: 800; color: #2a9d8f; }
 
-.continue-buttons { display: flex; gap: 12px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+.continue-buttons { display: flex; gap: clamp(10px, 2vw, 12px); justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+
+/* =================================
+   MEDIA QUERIES - RESPONSIVE DESIGN
+   ================================= */
+
+@media (max-width: 768px) {
+    .video-container {
+        min-height: 280px;
+    }
+    
+    .video-controls {
+        padding: clamp(14px, 3vw, 18px);
+        gap: clamp(10px, 2vw, 15px);
+    }
+}
+
+@media (max-width: 480px) {
+    .video-container {
+        min-height: 250px;
+        overflow: visible;
+    }
+    
+    .video-controls {
+        padding: clamp(12px, 2.5vw, 16px);
+        gap: clamp(8px, 2vw, 12px);
+    }
+    
+    .exercise-info-overlay {
+        top: 10px;
+        font-size: 0.85rem;
+    }
+}
