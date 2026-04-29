@@ -3,8 +3,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 80vh;
-  padding: 10px;
+  min-height: calc(100vh - 80px);
+  padding: clamp(10px, 4vw, 20px);
 }
   
 .form-card {
@@ -17,9 +17,9 @@
 }
 
 .form-card h2 {
-    font-size: 2.5rem;
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
     font-weight: 600;
-    margin-bottom: 10px;
+    margin-bottom: clamp(8px, 2vw, 10px);
     text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
 }
 
@@ -27,25 +27,25 @@
     display: flex;
     flex-direction: column;
     width: 100%; 
-    gap: 15px; 
+    gap: clamp(12px, 2vw, 15px);
 }
   
 .form-subtitle {
-    font-size: 1.1rem;
+    font-size: clamp(0.95rem, 2vw, 1.1rem);
     font-weight: 300;
-    margin-bottom: 30px;
+    margin-bottom: clamp(20px, 5vw, 30px);
 }
   
 .form-card input {
     width: 100%;
     box-sizing: border-box;
-    padding: 15px;
-    margin-bottom: 20px;
+    padding: clamp(12px, 2vw, 15px);
+    margin-bottom: clamp(15px, 3vw, 20px);
     border-radius: 10px;
     border: 1px solid #d4c4b0;
     background: #ffffff;
     color: #2d2d2d;
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 2vw, 1rem);
     outline: none;
     transition: all 0.2s ease;
 }
@@ -61,12 +61,12 @@
 
 .form-button {
     width: 100%;
-    padding: 15px;
+    padding: clamp(12px, 2vw, 15px);
     border: none;
     border-radius: 10px;
     background: #8b5a3c;
     color: white;
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -89,14 +89,14 @@
 /* L'input deve occupare tutto lo spazio del contenitore */
 .password-container .form-input {
   width: 100%;
-  padding-right: 60px; /* Lascia spazio a destra per non coprire il testo con la password */
+  padding-right: 60px;
   box-sizing: border-box;
 }
 
 /* Il tasto "Mostra" viene ancorato dentro l'input */
 .show-password-button {
   position: absolute;
-  right: 8px; /* Distanza dal bordo destro dell'input */
+  right: 8px;
   top: 40%;
   transform: translateY(-50%); /* Lo centra perfettamente in verticale */
   cursor: pointer;
